@@ -65,7 +65,7 @@ public class Multicast {
             if (operation.equals("NewChildRequest"))
                 newChildRequest(connectionSocket);
             else if (operation.equals("NewChildAccepted"))
-                newChildAccepted(message);
+                newChildAccepted(connectionSocket, message);
             else {
                 propagateMessage(connectionSocket, message);
                 if (message.getReceivers().contains(thisPeer.getId())) {
@@ -112,6 +112,10 @@ public class Multicast {
         TCP.send(socket, message);
     }
 
+    private Message receive(Socket socket) throws IOException {
+        return (Message) TCP.receive(socket);
+    }
+
     private synchronized void newChildRequest(Socket socket) throws Exception {
         String hostName = socket.getInetAddress().getHostName();
         int port = socket.getPort();
@@ -124,12 +128,18 @@ public class Multicast {
         thisPeer.addChild(node);
         Message message = new Message("NewChildAccepted", thisPeer, root, node.getId());
         send(socket, message);
+        /* Wait for an ACK so this Multicast object does not change its state until the new child
+        is updated (pay attention that the functions that change the state are synchronized). */
+        Message answer = receive(socket);
+        if (!answer.getOperation().equals("NewChildAcceptedAck"))
+            throw new Exception("Problem receiving the acknowledgment of the new child.");
     }
 
-    private synchronized void newChildAccepted(Message message) {
+    private synchronized void newChildAccepted(Socket socket, Message message) throws Exception {
         root = (Node) message.getBody();
         thisPeer = root.getNode(message.getReceivers().get(0));
         parent = root.getParent(message.getSender());
+        send(socket, new Message("NewChildAcceptedAck", thisPeer, parent.getId()));
     }
 
     /*
