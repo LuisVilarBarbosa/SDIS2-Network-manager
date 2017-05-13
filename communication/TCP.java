@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class TCP {
+class TCP {
 
     public static void send(Socket socket, Object object) throws Exception {
         socket.setSoTimeout(3000); //3 sec
