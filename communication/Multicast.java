@@ -102,7 +102,16 @@ public class Multicast {
         }
     }
 
-    public void send(String hostName, int hostPort, Message message) throws Exception {
+    public void send(Message message) throws Exception {
+        if (thisPeer == null)
+            throw new Exception("The multicast connection is not already established.");
+
+        Socket socket = new Socket(thisPeer.getHostName(), thisPeer.getPort());
+        propagateMessage(socket, message);
+        socket.close();
+    }
+
+    private void send(String hostName, int hostPort, Message message) throws Exception {
         Socket socket = new Socket(hostName, hostPort);
         send(socket, message);
         socket.close();
