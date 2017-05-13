@@ -38,10 +38,6 @@ class Node implements Serializable {
         children.add(n);
     }
 
-    public void removeChild(int index) {
-        children.remove(index);
-    }
-
     public void removeChild(Node node) {
         children.remove(node);
     }
