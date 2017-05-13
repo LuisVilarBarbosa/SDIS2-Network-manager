@@ -10,29 +10,34 @@ import java.util.TimerTask;
 
 // Follows the Banana Tree Protocol
 public class Multicast {
+    public static final int CREATE_NEW_GROUP_MODE = 1;
+    public static final int JOIN_GROUP_MODE = 2;
     private int thisHostPort;
     private Node root;
     private Node thisPeer;
     private Node parent;
 
-    // New group
-    public Multicast(int thisHostPort) {
+    /*
+    If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
+    If the peer is joining a group, 'publicHostName' and 'publicHostPort' must be the reachable address of an already online peer.
+     */
+    public Multicast(int mode, int thisHostPort, String publicHostName, int publicHostPort) throws Exception {
         this.thisHostPort = thisHostPort;
-        this.thisPeer = new Node(1, "localhost", thisHostPort);
-        this.root = this.thisPeer;
         this.parent = null;
-        dispatcher();
-        generatePingParentThread();
-    }
 
-    // Join group
-    public Multicast(int thisHostPort, String anotherHostName, int anotherHostPort) throws Exception {
-        this.thisHostPort = thisHostPort;
-        this.thisPeer = null;
-        this.root = null;
-        this.parent = null;
-        Message message = new Message("NewChildRequest", this.thisPeer);
-        send(anotherHostName, anotherHostPort, message);
+        switch (mode) {
+            case CREATE_NEW_GROUP_MODE:
+                this.thisPeer = new Node(1, publicHostName, publicHostPort);
+                this.root = this.thisPeer;
+                break;
+            case JOIN_GROUP_MODE:
+                this.thisPeer = null;
+                this.root = null;
+                Message message = new Message("NewChildRequest", this.thisPeer);
+                send(publicHostName, publicHostPort, message);
+                break;
+        }
+
         dispatcher();
         generatePingParentThread();
     }
