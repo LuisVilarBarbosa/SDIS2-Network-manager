@@ -3,6 +3,8 @@ package communication;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +22,7 @@ public class Multicast {
         this.root = this.thisPeer;
         this.parent = null;
         dispatcher();
+        generatePingParentThread();
     }
 
     // Join group
@@ -31,6 +34,18 @@ public class Multicast {
         Message message = new Message("NewChildRequest", this.thisPeer);
         send(anotherHostName, anotherHostPort, message);
         dispatcher();
+        generatePingParentThread();
+    }
+
+    private void generatePingParentThread() {
+        Timer timerReq = new Timer();
+        TimerTask t = new TimerTask() {
+            @Override
+            public void run() {
+                pingParentRequest();
+            }
+        };
+        timerReq.schedule(t, 0);
     }
 
     private void dispatcher() {
@@ -68,8 +83,15 @@ public class Multicast {
                 newChildAccepted(connectionSocket, message);
             else {
                 propagateMessage(connectionSocket, message);
-                if (message.getReceivers().contains(thisPeer.getId())) {
+                ArrayList<Integer> receivers = message.getReceivers();
+                if (receivers.isEmpty() || receivers.contains(thisPeer.getId())) {
                     // execute operations
+                    if (message.getOperation().equals("PingParentRequest"))
+                        pingParentConfirmation(connectionSocket, message);
+                    else if (message.getOperation().equals("ChangeParentRequest"))
+                        changeParentConfirmation(connectionSocket, message);
+                    else if (message.getOperation().equals("ChangeNodeParent"))
+                        changeNodeParent(message);
                 }
             }
 
@@ -140,7 +162,7 @@ public class Multicast {
         /* Wait for an ACK so this Multicast object does not change its state until the new child
         is updated (pay attention that the functions that change the state are synchronized). */
         Message answer = receive(socket);
-        if (!answer.getOperation().equals("NewChildAcceptedAck"))
+        if (answer == null || !answer.getOperation().equals("NewChildAcceptedAck"))
             throw new Exception("Problem receiving the acknowledgment of the new child.");
     }
 
@@ -151,15 +173,78 @@ public class Multicast {
         send(socket, new Message("NewChildAcceptedAck", thisPeer, parent.getId()));
     }
 
-    /*
-    Switch parent operation is missing. The peer must verify if the
-    new parent is not his descendant and must ask for permission to
-    the new parent before changing parent.
+    private void pingParentRequest() {
+        while (true) {
+            try {
+                if (parent != null) {
+                    Socket socket = new Socket(parent.getHostName(), parent.getPort());
+                    send(socket, new Message("PingParentRequest", thisPeer, parent.getId()));
+                    Message answer = receive(socket);
+                    if (answer == null)
+                        changeParentRequest();
+                    else if (!answer.getOperation().equals("PingParentConfirmation"))
+                        throw new Exception("Problem receiving the confirmation that the parent is alive.");
+                }
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-    If a node fails, the tree of which it is root partitions, and its
-    children will become children of the root.
-    Alternatively, to avoid overloading the root, they can
-    become children of their grandparent, i.e. the parent of the
-    faulty node.
-    */
+    private void pingParentConfirmation(Socket socket, Message message) throws Exception {
+        send(socket, new Message("PingParentConfirmation", thisPeer, message.getSender().getId()));
+    }
+
+    private synchronized void changeParentRequest() throws Exception {
+        if (!changeParentRequestAux(root, thisPeer))
+            throw new Exception("Unable to send a change parent request to a new parent.");
+    }
+
+    private synchronized boolean changeParentRequestAux(Node root, Node thisPeer) throws Exception {
+        boolean parentChanged = false;
+        Socket socket = new Socket(root.getHostName(), root.getPort());
+        send(socket, new Message("ChangeParentRequest", thisPeer, root.getId()));
+        Message answer = receive(socket);
+        if (answer == null) {
+            for (Node child : root.getChildren()) {
+                if (!thisPeer.isDescendant(child))
+                    if (changeParentRequestAux(child, thisPeer))
+                        break;
+            }
+        } else if (answer.getOperation().equals("ChangeParentConfirmation")) {
+            boolean parentIsRoot = this.parent.equals(this.root);
+            this.parent = root.getNode(answer.getSender().getId());
+            if (parentIsRoot)
+                this.root = this.parent;
+            send(socket, new Message("ChangeParentConfirmationAck", thisPeer, this.parent.getId()));
+            parentChanged = true;
+        }
+        socket.close();
+        return parentChanged;
+    }
+
+    private synchronized void changeParentConfirmation(Socket socket, Message message) throws Exception {
+        // It is automatically authorized to change because during the time where problems can occur this function is not initiated.
+        Node newChild = root.getNode(message.getSender().getId());
+        send(socket, new Message("ChangeParentConfirmation", thisPeer, newChild.getId()));
+        send(new Message("ChangeNodeParent", thisPeer, newChild));
+        Message answer = receive(socket);
+        if (answer == null || !answer.equals("ChangeParentConfirmationAck"))
+            throw new Exception("Problem receiving the acknowledgment of the new child parent has changed.");
+    }
+
+    private synchronized void changeNodeParent(Message message) {
+        // The old parent will automatically detect that its child is no longer its child and deletes it from the 'children' array.
+        int parentNodeId = message.getSender().getId();
+        int childNodeId = ((Node) message.getBody()).getId();
+        Node childNode = root.getNode(childNodeId);
+        Node oldParentNode = root.getParent(childNode);
+        oldParentNode.removeChild(childNode);
+        Node newParent = root.getNode(parentNodeId);
+        newParent.addChild(childNode);
+    }
 }
