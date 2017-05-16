@@ -1,10 +1,44 @@
+import communication.Multicast;
+
 import java.util.Scanner;
 
 public class NetworkManager {
 
     public static void main(String args[]) {
-        if(args.length != 0)
-            System.out.println("Indicated arguments will be ignored.");
+        Multicast m;
+        if (args.length != 4 && args.length != 6) {
+            System.out.println("Usage:");
+            System.out.println("NetworkManager new_group <local host port> <public host name> <public host port>");
+            System.out.println("NetworkManager join_group <local host port> <public host name> <public host port> <another host name> <another host port>");
+            return;
+        } else {
+
+            String mode = args[0];
+            int localHostPort = Integer.parseInt(args[1]);
+            String publicHostName = args[2];
+            int publicHostPort = Integer.parseInt(args[3]);
+            if (args.length == 4) {
+                if (!mode.equals("new_group")) {
+                    System.out.println("Invalid arguments.");
+                    return;
+                }
+                m = new Multicast(localHostPort, publicHostName, publicHostPort);
+            } else {
+                String anotherHostName = args[4];
+                int anotherHostPort = Integer.parseInt(args[5]);
+                if (!mode.equals("join_group")) {
+                    System.out.println("Invalid arguments.");
+                    return;
+                }
+                try {
+                    m = new Multicast(localHostPort, publicHostName, publicHostPort, anotherHostName, anotherHostPort);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+
+        }
 
         NetworkManager n = new NetworkManager();
 
