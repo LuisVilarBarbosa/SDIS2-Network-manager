@@ -15,7 +15,7 @@ public class Multicast {
     private Node parent;
 
     //If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
-    public Multicast(int thisHostPort, String publicHostName, int publicHostPort) throws Exception {
+    public Multicast(int thisHostPort, String publicHostName, int publicHostPort) {
         this.thisHostPort = thisHostPort;
         this.parent = null;
         this.thisPeer = new Node(1, publicHostName, publicHostPort);
