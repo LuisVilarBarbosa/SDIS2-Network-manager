@@ -80,10 +80,7 @@ public class Multicast {
 
     private void requestsProcessor(Socket connectionSocket) {
         try {
-            Object object = TCP.receive(connectionSocket);
-
-            Message message = (Message) object;
-            System.out.println(message);
+            Message message = receive(connectionSocket);
 
             String operation = message.getOperation();
             if (operation.equals("NewChildRequest"))
@@ -148,10 +145,13 @@ public class Multicast {
 
     private void send(Socket socket, Message message) throws Exception {
         TCP.send(socket, message);
+        System.out.println("< " + message);
     }
 
     private Message receive(Socket socket) throws IOException {
-        return (Message) TCP.receive(socket);
+        Message message = (Message) TCP.receive(socket);
+        System.out.println("> " + message);
+        return message;
     }
 
     private synchronized void newChildRequest(Socket socket, Message message) throws Exception {
