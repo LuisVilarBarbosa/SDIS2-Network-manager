@@ -3,41 +3,34 @@ package communication;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 // Follows the Banana Tree Protocol
 public class Multicast {
-    public static final int CREATE_NEW_GROUP_MODE = 1;
-    public static final int JOIN_GROUP_MODE = 2;
     private int thisHostPort;
     private Node root;
     private Node thisPeer;
     private Node parent;
 
-    /*
-    If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
-    If the peer is joining a group, 'publicHostName' and 'publicHostPort' must be the reachable address of an already online peer.
-     */
-    public Multicast(int mode, int thisHostPort, String publicHostName, int publicHostPort) throws Exception {
+    //If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
+    public Multicast(int thisHostPort, String publicHostName, int publicHostPort) throws Exception {
         this.thisHostPort = thisHostPort;
         this.parent = null;
+        this.thisPeer = new Node(1, publicHostName, publicHostPort);
+        this.root = this.thisPeer;
+        dispatcher();
+        generatePingParentThread();
+    }
 
-        switch (mode) {
-            case CREATE_NEW_GROUP_MODE:
-                this.thisPeer = new Node(1, publicHostName, publicHostPort);
-                this.root = this.thisPeer;
-                break;
-            case JOIN_GROUP_MODE:
-                this.thisPeer = null;
-                this.root = null;
-                Message message = new Message("NewChildRequest", this.thisPeer);
-                send(publicHostName, publicHostPort, message);
-                break;
-        }
-
+    //If the peer is joining a group, 'publicHostName' and 'publicHostPort' must be the reachable address of an already online peer.
+    public Multicast(int thisHostPort, String publicHostName, int publicHostPort, String anotherHostName, int anotherHostPort) throws Exception {
+        this.thisHostPort = thisHostPort;
+        this.parent = null;
+        this.thisPeer = null;
+        this.root = null;
+        newChild(publicHostName, publicHostPort, anotherHostName, anotherHostPort);
         dispatcher();
         generatePingParentThread();
     }
@@ -83,9 +76,7 @@ public class Multicast {
 
             String operation = message.getOperation();
             if (operation.equals("NewChildRequest"))
-                newChildRequest(connectionSocket);
-            else if (operation.equals("NewChildAccepted"))
-                newChildAccepted(connectionSocket, message);
+                newChildRequest(connectionSocket, message);
             else {
                 propagateMessage(connectionSocket, message);
                 ArrayList<Integer> receivers = message.getReceivers();
@@ -152,9 +143,10 @@ public class Multicast {
         return (Message) TCP.receive(socket);
     }
 
-    private synchronized void newChildRequest(Socket socket) throws Exception {
-        String hostName = socket.getInetAddress().getHostName();
-        int port = socket.getPort();
+    private synchronized void newChildRequest(Socket socket, Message message) throws Exception {
+        Node sender = message.getSender();
+        String hostName = sender.getHostName();
+        int port = sender.getPort();
         int newId = root.getMaxId() + 1;
         if (newId == 0) {  // overflow occurred
             System.err.println("The maximum number of ids has been reached.");
@@ -162,8 +154,8 @@ public class Multicast {
         }
         Node node = new Node(newId, hostName, port);
         thisPeer.addChild(node);
-        Message message = new Message("NewChildAccepted", thisPeer, root, node.getId());
-        send(socket, message);
+        Message confirmationMessage = new Message("NewChildAccepted", thisPeer, root, node.getId());
+        send(socket, confirmationMessage);
         /* Wait for an ACK so this Multicast object does not change its state until the new child
         is updated (pay attention that the functions that change the state are synchronized). */
         Message answer = receive(socket);
@@ -171,11 +163,16 @@ public class Multicast {
             throw new Exception("Problem receiving the acknowledgment of the new child.");
     }
 
-    private synchronized void newChildAccepted(Socket socket, Message message) throws Exception {
-        root = (Node) message.getBody();
-        thisPeer = root.getNode(message.getReceivers().get(0));
-        parent = root.getParent(message.getSender());
-        send(socket, new Message("NewChildAcceptedAck", thisPeer, parent.getId()));
+    private synchronized void newChild(String publicHostName, int publicHostPort, String anotherHostName, int anotherHostPort) throws Exception {
+        this.thisPeer = new Node(0, publicHostName, publicHostPort);  // 0 = id that is not used, except here
+        Socket socket = new Socket(anotherHostName, anotherHostPort);
+        Message message = new Message("NewChildRequest", this.thisPeer);
+        send(socket, message);
+        Message answer = receive(socket);
+        root = (Node) answer.getBody();
+        thisPeer = root.getNode(answer.getReceivers().get(0));
+        parent = root.getParent(answer.getSender());
+        send(socket, new Message("NewChildAcceptedAck", thisPeer/*, parent.getId()*/)); // parent is null
     }
 
     private void pingParentRequest() {
@@ -190,10 +187,6 @@ public class Multicast {
                     else if (!answer.getOperation().equals("PingParentConfirmation"))
                         throw new Exception("Problem receiving the confirmation that the parent is alive.");
                 }
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
             }
