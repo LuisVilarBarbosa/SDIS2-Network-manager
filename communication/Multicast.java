@@ -20,7 +20,7 @@ public class Multicast {
         this.parent = null;
         this.thisPeer = new Node(1, publicHostName, publicHostPort);
         this.root = this.thisPeer;
-        dispatcher();
+        generateDispatcherThread();
         generatePingParentThread();
     }
 
@@ -31,7 +31,7 @@ public class Multicast {
         this.thisPeer = null;
         this.root = null;
         newChild(publicHostName, publicHostPort, anotherHostName, anotherHostPort);
-        dispatcher();
+        generateDispatcherThread();
         generatePingParentThread();
     }
 
@@ -41,6 +41,17 @@ public class Multicast {
             @Override
             public void run() {
                 pingParentRequest();
+            }
+        };
+        timerReq.schedule(t, 0);
+    }
+
+    private void generateDispatcherThread() {
+        Timer timerReq = new Timer();
+        TimerTask t = new TimerTask() {
+            @Override
+            public void run() {
+                dispatcher();
             }
         };
         timerReq.schedule(t, 0);
