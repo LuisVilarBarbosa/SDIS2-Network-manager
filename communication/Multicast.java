@@ -182,8 +182,8 @@ public class Multicast {
         Message answer = receive(socket);
         root = (Node) answer.getBody();
         thisPeer = root.getNode(answer.getReceivers().get(0));
-        parent = root.getParent(answer.getSender());
-        send(socket, new Message("NewChildAcceptedAck", thisPeer/*, parent.getId()*/)); // parent is null
+        parent = root.getParent(thisPeer);
+        send(socket, new Message("NewChildAcceptedAck", thisPeer, parent.getId()));
     }
 
     private void pingParentRequest() {
