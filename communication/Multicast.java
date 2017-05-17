@@ -198,6 +198,7 @@ public class Multicast {
                     else if (!answer.getOperation().equals("PingParentConfirmation"))
                         throw new Exception("Problem receiving the confirmation that the parent is alive.");
                 }
+                Thread.sleep(TCP.timeout);
             } catch (Exception e) {
                 e.printStackTrace();
             }
