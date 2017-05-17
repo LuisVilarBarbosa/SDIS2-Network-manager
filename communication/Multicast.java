@@ -82,20 +82,23 @@ public class Multicast {
         try {
             Message message = receive(connectionSocket);
 
-            String operation = message.getOperation();
-            if (message.getOperation().equals("PingParentRequest"))
-                pingParentConfirmation(connectionSocket, message);
-            else if (message.getOperation().equals("ChangeParentRequest"))
-                changeParentConfirmation(connectionSocket, message);
-            else if (operation.equals("NewChildRequest"))
-                newChildRequest(connectionSocket, message);
-            else {
-                propagateMessage(message);
-                ArrayList<Integer> receivers = message.getReceivers();
-                if (receivers.isEmpty() || receivers.contains(thisPeer.getId())) {
-                    // execute operations
-                    if (message.getOperation().equals("ChangeNodeParent"))
-                        changeNodeParent(message);
+            if (message != null && Message.class.isInstance(message)) {
+                String operation = message.getOperation();
+
+                if (message.getOperation().equals("PingParentRequest"))
+                    pingParentConfirmation(connectionSocket, message);
+                else if (message.getOperation().equals("ChangeParentRequest"))
+                    changeParentConfirmation(connectionSocket, message);
+                else if (operation.equals("NewChildRequest"))
+                    newChildRequest(connectionSocket, message);
+                else {
+                    propagateMessage(message);
+                    ArrayList<Integer> receivers = message.getReceivers();
+                    if (receivers.isEmpty() || receivers.contains(thisPeer.getId())) {
+                        // execute operations
+                        if (message.getOperation().equals("ChangeNodeParent"))
+                            changeNodeParent(message);
+                    }
                 }
             }
 
