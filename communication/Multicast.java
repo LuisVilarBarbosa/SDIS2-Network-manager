@@ -86,7 +86,7 @@ public class Multicast {
             if (operation.equals("NewChildRequest"))
                 newChildRequest(connectionSocket, message);
             else {
-                propagateMessage(connectionSocket, message);
+                propagateMessage(message);
                 ArrayList<Integer> receivers = message.getReceivers();
                 if (receivers.isEmpty() || receivers.contains(thisPeer.getId())) {
                     // execute operations
@@ -107,21 +107,17 @@ public class Multicast {
         }
     }
 
-    private void propagateMessage(Socket socket, Message message) {
-        String socketHostName = socket.getInetAddress().getHostName();
-        int socketHostPort = socket.getPort();
+    private void propagateMessage(Message message) {
+        Node lastSender = message.getLastSender();
+        message.setLastSender(thisPeer);
         try {
             for (Node n : thisPeer.getChildren()) {
-                String nodeHostName = n.getHostName();
-                int nodeHostPort = n.getPort();
-                if (!(socketHostName.equals(nodeHostName) && socketHostPort == nodeHostPort))
-                    send(nodeHostName, nodeHostPort, message);
+                if (!lastSender.equals(n))
+                    send(n.getHostName(), n.getPort(), message);
             }
             if (parent != null) {
-                String parentHostName = parent.getHostName();
-                int parentHostPort = parent.getPort();
-                if (!(socketHostName.equals(parentHostName) && socketHostPort == parentHostPort))
-                    send(parentHostName, parentHostPort, message);
+                if (!lastSender.equals(parent))
+                    send(parent.getHostName(), parent.getPort(), message);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -131,10 +127,7 @@ public class Multicast {
     public void send(Message message) throws Exception {
         if (thisPeer == null)
             throw new Exception("The multicast connection is not already established.");
-
-        Socket socket = new Socket(thisPeer.getHostName(), thisPeer.getPort());
-        propagateMessage(socket, message);
-        socket.close();
+        propagateMessage(message);
     }
 
     private void send(String hostName, int hostPort, Message message) throws Exception {

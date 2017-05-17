@@ -6,12 +6,14 @@ import java.util.ArrayList;
 public class Message implements Serializable {
     private String operation;
     private Node sender;
+    private Node lastSender;
     private ArrayList<Integer> receivers;   // if empty = all
     private Object body;
 
     public Message(String operation, Node sender, Integer... receivers) {
         this.operation = operation;
         this.sender = sender;
+        this.lastSender = sender;
         this.receivers = new ArrayList<>();
         for (Integer id : receivers)
             this.receivers.add(id);
@@ -20,6 +22,7 @@ public class Message implements Serializable {
     public Message(String operation, Node sender, Object body, Integer... receivers) {
         this.operation = operation;
         this.sender = sender;
+        this.lastSender = sender;
         this.body = body;
         this.receivers = new ArrayList<>();
         for (Integer id : receivers)
@@ -32,6 +35,14 @@ public class Message implements Serializable {
 
     public Node getSender() {
         return sender;
+    }
+
+    public Node getLastSender() {
+        return lastSender;
+    }
+
+    public void setLastSender(Node lastSender) {
+        this.lastSender = lastSender;
     }
 
     public ArrayList<Integer> getReceivers() {
