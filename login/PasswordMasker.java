@@ -1,3 +1,4 @@
+package login;
 
 public class PasswordMasker implements Runnable {
 	private boolean active;

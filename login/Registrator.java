@@ -1,3 +1,4 @@
+package login;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -9,7 +10,7 @@ public class Registrator {
 	private HttpURLConnection serverConnection;
 	private OutputStream serverStream;
 	
-	Registrator(String url) throws IOException {
+	public Registrator(String url) throws IOException {
 		this.serverURL = new URL(url);
 		this.serverConnection = (HttpURLConnection) this.serverURL.openConnection();
 		this.serverConnection.setRequestMethod("POST");
