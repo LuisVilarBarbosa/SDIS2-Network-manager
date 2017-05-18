@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -33,6 +34,26 @@ public class Multicast {
         newChild(publicHostName, publicHostPort, anotherHostName, anotherHostPort);
         generateDispatcherThread();
         generatePingParentThread();
+    }
+
+    public Node getThisPeer() {
+        return thisPeer;
+    }
+
+    public void showConnectedPeers() {
+        HashMap<Integer, Node> connectedPeers = getConnectedPeers(root);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Node n : connectedPeers.values())
+            stringBuilder.append(n.getId()).append("\t").append(n.getHostName()).append("\t").append(n.getPort()).append("\n");
+        System.out.println(stringBuilder);
+    }
+
+    private HashMap<Integer, Node> getConnectedPeers(Node root) {
+        HashMap<Integer, Node> connectedPeers = new HashMap<>();
+        connectedPeers.put(root.getId(), root);
+        for (Node child : root.getChildren())
+            connectedPeers.putAll(getConnectedPeers(child));
+        return connectedPeers;
     }
 
     private void generatePingParentThread() {
