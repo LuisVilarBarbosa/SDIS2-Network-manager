@@ -3,7 +3,7 @@ package communication;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-class Node implements Serializable {
+public class Node implements Serializable {
     private int id;
     private String hostName;
     private int port;

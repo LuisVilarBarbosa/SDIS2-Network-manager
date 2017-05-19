@@ -1,5 +1,8 @@
 package communication;
 
+import files.FileData;
+import files.TransmitFile;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -44,6 +47,7 @@ public class Multicast {
         newChild(publicHostName, publicHostPort, anotherHostName, anotherHostPort);
         generateDispatcherThread();
         generatePingParentThread();
+        TransmitFile.sendFile(this, "medicoes.txt");
     }
 
     public Node getThisPeer() {
@@ -129,6 +133,10 @@ public class Multicast {
                         // execute operations
                         if (message.getOperation().equals(ChangeNodeParent))
                             changeNodeParent(message);
+                        else if(message.getOperation().equals("SendFile"))
+                            TransmitFile.receiveFile(message, this);
+                        else if(message.getOperation().equals("ResendFile"))
+                            TransmitFile.sendFile(this, ((FileData)message.getBody()).getFilepath(), message.getSender().getId());
                     }
                 }
             }
