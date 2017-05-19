@@ -24,10 +24,8 @@ public class Registrator {
 		this.serverStream.flush();
 		
 		if(this.serverConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-			System.out.println("Login successful");
 			return true;
 		} else {
-			System.out.println(this.serverConnection.getResponseMessage());
 			return false;
 		}
 	}
@@ -38,5 +36,9 @@ public class Registrator {
 		sb.append("&pv_password=").append(password);
 		
 		return sb.toString();
+	}
+	
+	public String getServerMessage() throws IOException {
+		return this.serverConnection.getResponseMessage();
 	}
 }
