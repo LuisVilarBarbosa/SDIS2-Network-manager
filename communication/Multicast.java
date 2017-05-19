@@ -10,6 +10,16 @@ import java.util.TimerTask;
 
 // Follows the Banana Tree Protocol
 public class Multicast {
+    private static final String NewChildRequest = "NewChildRequest";
+    private static final String NewChildAccepted = "NewChildAccepted";
+    private static final String NewChildAcceptedAck = "NewChildAcceptedAck";
+    private static final String PingParentRequest = "PingParentRequest";
+    private static final String PingParentConfirmation = "PingParentConfirmation";
+    private static final String ChangeParentRequest = "ChangeParentRequest";
+    private static final String ChangeParentConfirmation = "ChangeParentConfirmation";
+    private static final String ChangeParentConfirmationAck = "ChangeParentConfirmationAck";
+    private static final String ChangeNodeParent = "ChangeNodeParent";
+
     private int thisHostPort;
     private Node root;
     private Node thisPeer;
@@ -106,18 +116,18 @@ public class Multicast {
             if (message != null && Message.class.isInstance(message)) {
                 String operation = message.getOperation();
 
-                if (message.getOperation().equals("PingParentRequest"))
+                if (message.getOperation().equals(PingParentRequest))
                     pingParentConfirmation(connectionSocket, message);
-                else if (message.getOperation().equals("ChangeParentRequest"))
+                else if (message.getOperation().equals(ChangeParentRequest))
                     changeParentConfirmation(connectionSocket, message);
-                else if (operation.equals("NewChildRequest"))
+                else if (operation.equals(NewChildRequest))
                     newChildRequest(connectionSocket, message);
                 else {
                     propagateMessage(message);
                     ArrayList<Integer> receivers = message.getReceivers();
                     if (receivers.isEmpty() || receivers.contains(thisPeer.getId())) {
                         // execute operations
-                        if (message.getOperation().equals("ChangeNodeParent"))
+                        if (message.getOperation().equals(ChangeNodeParent))
                             changeNodeParent(message);
                     }
                 }
@@ -182,25 +192,25 @@ public class Multicast {
         }
         Node node = new Node(newId, hostName, port);
         thisPeer.addChild(node);
-        Message confirmationMessage = new Message("NewChildAccepted", thisPeer, root, node.getId());
+        Message confirmationMessage = new Message(NewChildAccepted, thisPeer, root, node.getId());
         send(socket, confirmationMessage);
         /* Wait for an ACK so this Multicast object does not change its state until the new child
         is updated (pay attention that the functions that change the state are synchronized). */
         Message answer = receive(socket);
-        if (answer == null || !answer.getOperation().equals("NewChildAcceptedAck"))
+        if (answer == null || !answer.getOperation().equals(NewChildAcceptedAck))
             throw new Exception("Problem receiving the acknowledgment of the new child.");
     }
 
     private synchronized void newChild(String publicHostName, int publicHostPort, String anotherHostName, int anotherHostPort) throws Exception {
         this.thisPeer = new Node(0, publicHostName, publicHostPort);  // 0 = id that is not used, except here
         Socket socket = new Socket(anotherHostName, anotherHostPort);
-        Message message = new Message("NewChildRequest", this.thisPeer);
+        Message message = new Message(NewChildRequest, this.thisPeer);
         send(socket, message);
         Message answer = receive(socket);
         root = (Node) answer.getBody();
         thisPeer = root.getNode(answer.getReceivers().get(0));
         parent = root.getParent(thisPeer);
-        send(socket, new Message("NewChildAcceptedAck", thisPeer, parent.getId()));
+        send(socket, new Message(NewChildAcceptedAck, thisPeer, parent.getId()));
     }
 
     private void pingParentRequest() {
@@ -208,11 +218,11 @@ public class Multicast {
             try {
                 if (parent != null) {
                     Socket socket = new Socket(parent.getHostName(), parent.getPort());
-                    send(socket, new Message("PingParentRequest", thisPeer, parent.getId()));
+                    send(socket, new Message(PingParentRequest, thisPeer, parent.getId()));
                     Message answer = receive(socket);
                     if (answer == null)
                         changeParentRequest();
-                    else if (!answer.getOperation().equals("PingParentConfirmation"))
+                    else if (!answer.getOperation().equals(PingParentConfirmation))
                         throw new Exception("Problem receiving the confirmation that the parent is alive.");
                 }
                 Thread.sleep(TCP.timeout);
@@ -223,7 +233,7 @@ public class Multicast {
     }
 
     private void pingParentConfirmation(Socket socket, Message message) throws Exception {
-        send(socket, new Message("PingParentConfirmation", thisPeer, message.getSender().getId()));
+        send(socket, new Message(PingParentConfirmation, thisPeer, message.getSender().getId()));
     }
 
     private synchronized void changeParentRequest() throws Exception {
@@ -234,7 +244,7 @@ public class Multicast {
     private synchronized boolean changeParentRequestAux(Node root, Node thisPeer) throws Exception {
         boolean parentChanged = false;
         Socket socket = new Socket(root.getHostName(), root.getPort());
-        send(socket, new Message("ChangeParentRequest", thisPeer, root.getId()));
+        send(socket, new Message(ChangeParentRequest, thisPeer, root.getId()));
         Message answer = receive(socket);
         if (answer == null) {
             for (Node child : root.getChildren()) {
@@ -242,12 +252,12 @@ public class Multicast {
                     if (changeParentRequestAux(child, thisPeer))
                         break;
             }
-        } else if (answer.getOperation().equals("ChangeParentConfirmation")) {
+        } else if (answer.getOperation().equals(ChangeParentConfirmation)) {
             boolean parentIsRoot = this.parent.equals(this.root);
             this.parent = root.getNode(answer.getSender().getId());
             if (parentIsRoot)
                 this.root = this.parent;
-            send(socket, new Message("ChangeParentConfirmationAck", thisPeer, this.parent.getId()));
+            send(socket, new Message(ChangeParentConfirmationAck, thisPeer, this.parent.getId()));
             parentChanged = true;
         }
         socket.close();
@@ -257,10 +267,10 @@ public class Multicast {
     private synchronized void changeParentConfirmation(Socket socket, Message message) throws Exception {
         // It is automatically authorized to change because during the time where problems can occur this function is not initiated.
         Node newChild = root.getNode(message.getSender().getId());
-        send(socket, new Message("ChangeParentConfirmation", thisPeer, newChild.getId()));
-        send(new Message("ChangeNodeParent", thisPeer, newChild));
+        send(socket, new Message(ChangeParentConfirmation, thisPeer, newChild.getId()));
+        send(new Message(ChangeNodeParent, thisPeer, newChild));
         Message answer = receive(socket);
-        if (answer == null || !answer.equals("ChangeParentConfirmationAck"))
+        if (answer == null || !answer.equals(ChangeParentConfirmationAck))
             throw new Exception("Problem receiving the acknowledgment of the new child parent has changed.");
     }
 
