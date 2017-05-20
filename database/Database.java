@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Database {
-	private static final String delim = ",";
 	private static final String createUserTableSQL =	
 			"CREATE TABLE users ("
 			+ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -16,6 +16,12 @@ public class Database {
 			+ "isAdmin BOOLEAN NOT NULL);";
 	private static final String insertUserSQL = 
 			"INSERT INTO users (username, isAdmin) VALUES (?, ?);";
+	private static final String deleteUserSQL =
+			"DELETE FROM users "
+			+ "WHERE username LIKE ? ;";
+	private static final String selectUserSQL =
+			"SELECT * FROM users "
+			+ "WHERE username = ?;";
 	private final String dbPath;
 	private Connection dbConnection;
 	
@@ -47,10 +53,28 @@ public class Database {
 	}
 	
 	public boolean insertUser(String username) throws SQLException {
-		PreparedStatement stmt = this.dbConnection.prepareStatement(insertUserSQL);
+		try {
+			searchUser(username);
+		} catch (SQLException e) {
+			PreparedStatement stmt = this.dbConnection.prepareStatement(insertUserSQL);
+			stmt.setString(1, username);
+			stmt.setBoolean(2, false);
+			return stmt.execute();
+		}
+		//In case user already exists
+		return false;
+	}
+	
+	public boolean deleteUser(String username) throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(deleteUserSQL);
 		stmt.setString(1, username);
-		stmt.setBoolean(2, false);
 		return stmt.execute();
+	}
+	
+	public ResultSet searchUser(String username) throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(selectUserSQL);
+		stmt.setString(1, username);
+		return stmt.executeQuery();
 	}
 	
 	//TODO 	OU usamos SQL diretamente

@@ -22,7 +22,15 @@ public class Client {
 				try {
 					Database db = new Database("database.db");
 					if(db.open() != null) {
-						db.insertUser(username);
+						try {
+							db.insertUser(username);
+							db.deleteUser(username);
+						} catch (SQLException e) {
+							//TODO User already exists. Should we print something?
+							e.printStackTrace();
+						}
+					} else {
+						System.out.println("Database wasnt open");
 					}
 					db.close();
 				} catch (ClassNotFoundException e) {
@@ -31,9 +39,9 @@ public class Client {
 					e.printStackTrace();
 					System.out.println("Error: Could not create database");
 					return;
-				} catch (SQLException e) {
-					e.printStackTrace();
-					System.out.println("Error: Database connection may be closed");
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+					System.out.println("Error: Database may not be open");
 				}
 			} else {
 				System.out.println("Failed to login");
