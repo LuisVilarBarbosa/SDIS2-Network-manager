@@ -4,6 +4,7 @@ import files.FileData;
 import files.TransmitFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class Multicast {
     public Multicast(int thisHostPort, String publicHostName, int publicHostPort) {
         this.thisHostPort = thisHostPort;
         this.parent = null;
-        this.thisPeer = new Node(1, publicHostName, publicHostPort);
+        this.thisPeer = new Node(BigDecimal.ONE, publicHostName, publicHostPort);
         this.root = this.thisPeer;
         generateDispatcherThread();
         generatePingParentThread();
@@ -55,15 +56,15 @@ public class Multicast {
     }
 
     public void showConnectedPeers() {
-        HashMap<Integer, Node> connectedPeers = getConnectedPeers(root);
+        HashMap<BigDecimal, Node> connectedPeers = getConnectedPeers(root);
         StringBuilder stringBuilder = new StringBuilder();
         for (Node n : connectedPeers.values())
             stringBuilder.append(n.getId()).append("\t").append(n.getHostName()).append("\t").append(n.getPort()).append("\n");
         System.out.println(stringBuilder);
     }
 
-    private HashMap<Integer, Node> getConnectedPeers(Node root) {
-        HashMap<Integer, Node> connectedPeers = new HashMap<>();
+    private HashMap<BigDecimal, Node> getConnectedPeers(Node root) {
+        HashMap<BigDecimal, Node> connectedPeers = new HashMap<>();
         connectedPeers.put(root.getId(), root);
         for (Node child : root.getChildren())
             connectedPeers.putAll(getConnectedPeers(child));
@@ -128,15 +129,15 @@ public class Multicast {
                     newChildRequest(connectionSocket, message);
                 else {
                     propagateMessage(message);
-                    ArrayList<Integer> receivers = message.getReceivers();
+                    ArrayList<BigDecimal> receivers = message.getReceivers();
                     if (receivers.isEmpty() || receivers.contains(thisPeer.getId())) {
                         // execute operations
                         if (message.getOperation().equals(ChangeNodeParent))
                             changeNodeParent(message);
-                        else if(message.getOperation().equals("SendFile"))
+                        else if (message.getOperation().equals("SendFile"))
                             TransmitFile.receiveFile(message, this);
-                        else if(message.getOperation().equals("ResendFile"))
-                            TransmitFile.sendFile(this, ((FileData)message.getBody()).getFilepath(), message.getSender().getId());
+                        else if (message.getOperation().equals("ResendFile"))
+                            TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
                     }
                 }
             }
@@ -193,11 +194,7 @@ public class Multicast {
         Node sender = message.getSender();
         String hostName = sender.getHostName();
         int port = sender.getPort();
-        int newId = root.getMaxId() + 1;
-        if (newId == 0) {  // overflow occurred
-            System.err.println("The maximum number of ids has been reached.");
-            System.exit(1);
-        }
+        BigDecimal newId = root.getMaxId().add(BigDecimal.ONE);
         Node node = new Node(newId, hostName, port);
         thisPeer.addChild(node);
         Message confirmationMessage = new Message(NewChildAccepted, thisPeer, root, node.getId());
@@ -210,7 +207,7 @@ public class Multicast {
     }
 
     private synchronized void newChild(String publicHostName, int publicHostPort, String anotherHostName, int anotherHostPort) throws Exception {
-        this.thisPeer = new Node(0, publicHostName, publicHostPort);  // 0 = id that is not used, except here
+        this.thisPeer = new Node(BigDecimal.ZERO, publicHostName, publicHostPort);  // 0 = id that is not used, except here
         Socket socket = new Socket(anotherHostName, anotherHostPort);
         Message message = new Message(NewChildRequest, this.thisPeer);
         send(socket, message);
@@ -284,8 +281,8 @@ public class Multicast {
 
     private synchronized void changeNodeParent(Message message) {
         // The old parent will automatically detect that its child is no longer its child and deletes it from the 'children' array.
-        int parentNodeId = message.getSender().getId();
-        int childNodeId = ((Node) message.getBody()).getId();
+        BigDecimal parentNodeId = message.getSender().getId();
+        BigDecimal childNodeId = ((Node) message.getBody()).getId();
         Node childNode = root.getNode(childNodeId);
         Node oldParentNode = root.getParent(childNode);
         oldParentNode.removeChild(childNode);

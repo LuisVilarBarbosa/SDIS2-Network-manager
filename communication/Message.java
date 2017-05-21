@@ -1,31 +1,32 @@
 package communication;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 public class Message implements Serializable {
     private String operation;
     private Node sender;
     private Node lastSender;
-    private ArrayList<Integer> receivers;   // if empty = all
+    private ArrayList<BigDecimal> receivers;   // if empty = all
     private Object body;
 
-    public Message(String operation, Node sender, Integer... receivers) {
+    public Message(String operation, Node sender, BigDecimal... receivers) {
         this.operation = operation;
         this.sender = sender;
         this.lastSender = sender;
         this.receivers = new ArrayList<>();
-        for (Integer id : receivers)
+        for (BigDecimal id : receivers)
             this.receivers.add(id);
     }
 
-    public Message(String operation, Node sender, Object body, Integer... receivers) {
+    public Message(String operation, Node sender, Object body, BigDecimal... receivers) {
         this.operation = operation;
         this.sender = sender;
         this.lastSender = sender;
         this.body = body;
         this.receivers = new ArrayList<>();
-        for (Integer id : receivers)
+        for (BigDecimal id : receivers)
             this.receivers.add(id);
     }
 
@@ -45,7 +46,7 @@ public class Message implements Serializable {
         this.lastSender = lastSender;
     }
 
-    public ArrayList<Integer> getReceivers() {
+    public ArrayList<BigDecimal> getReceivers() {
         return receivers;
     }
 
@@ -66,7 +67,7 @@ public class Message implements Serializable {
         if (receivers.isEmpty())
             stringBuilder.append(" all");
         else {
-            for (Integer id : receivers)
+            for (BigDecimal id : receivers)
                 stringBuilder.append(" ").append(id);
         }
         stringBuilder.append("\n\n");

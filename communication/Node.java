@@ -1,15 +1,16 @@
 package communication;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 public class Node implements Serializable {
-    private int id;
+    private BigDecimal id;
     private String hostName;
     private int port;
     private ArrayList<Node> children;
 
-    public Node(int id, String hostName, int port) {
+    public Node(BigDecimal id, String hostName, int port) {
         if (hostName == null)
             throw new NullPointerException();
         this.id = id;
@@ -18,7 +19,7 @@ public class Node implements Serializable {
         this.children = new ArrayList<>();
     }
 
-    public int getId() {
+    public BigDecimal getId() {
         return id;
     }
 
@@ -68,8 +69,8 @@ public class Node implements Serializable {
         return false;
     }
 
-    public Node getNode(int id) {
-        if (this.id == id)
+    public Node getNode(BigDecimal id) {
+        if (this.id.equals(id))
             return this;
         for (Node n : children) {
             Node n1 = n.getNode(id);
@@ -80,11 +81,11 @@ public class Node implements Serializable {
     }
 
 
-    public int getMaxId() {
-        int maxId = id;
+    public BigDecimal getMaxId() {
+        BigDecimal maxId = id;
         for (Node n : children) {
-            int childId = n.getMaxId();
-            maxId = Math.max(maxId, childId);
+            BigDecimal childId = n.getMaxId();
+            maxId = maxId.max(childId);
         }
         return maxId;
     }
@@ -96,8 +97,8 @@ public class Node implements Serializable {
 
         Node node = (Node) o;
 
-        if (id != node.id) return false;
         if (port != node.port) return false;
+        if (id != null ? !id.equals(node.id) : node.id != null) return false;
         if (hostName != null ? !hostName.equals(node.hostName) : node.hostName != null) return false;
         return children != null ? children.equals(node.children) : node.children == null;
     }

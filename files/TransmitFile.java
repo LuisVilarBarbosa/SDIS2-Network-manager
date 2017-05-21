@@ -5,6 +5,7 @@ import communication.Multicast;
 import communication.Node;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
@@ -77,7 +78,7 @@ public class TransmitFile {
         return true;
     }
 
-    public static void sendFile(Multicast mc, String filepath, Integer... peer) throws Exception {
+    public static void sendFile(Multicast mc, String filepath, BigDecimal... peer) throws Exception {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(filepath);
