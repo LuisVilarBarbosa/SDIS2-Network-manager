@@ -199,13 +199,14 @@ public class TransmitFile {
 
                             fos.flush();
                             fos.close();
+							fis.close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
                 }
                 File pathToDelete = new File("database/temp/" + peerId + "/" + folderName);
-                System.out.println(deleteDirectory(pathToDelete));
+                deleteDirectory(pathToDelete);
             }
             else
                 ack = new Message("ResendFile", mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
