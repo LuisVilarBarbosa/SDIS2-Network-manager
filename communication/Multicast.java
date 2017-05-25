@@ -3,9 +3,9 @@ package communication;
 import files.FileData;
 import files.TransmitFile;
 
+import javax.net.ssl.SSLServerSocket;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,7 +95,7 @@ public class Multicast {
 
     private void dispatcher() {
         try {
-            ServerSocket receivingSocket = new ServerSocket(thisHostPort);
+            SSLServerSocket receivingSocket = SSL.generateSSLServerSocket(thisHostPort);
             while (true) {
                 Socket connectionSocket = receivingSocket.accept();
                 Timer timerReq = new Timer();
@@ -107,7 +107,7 @@ public class Multicast {
                 };
                 timerReq.schedule(t, 0);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             // Prevent process lock if a TimerTask is running
             System.exit(1);
@@ -174,7 +174,7 @@ public class Multicast {
     }
 
     private void send(String hostName, int hostPort, Message message) throws Exception {
-        Socket socket = new Socket(hostName, hostPort);
+        Socket socket = SSL.generateSSLSocket(hostName, hostPort);
         send(socket, message);
         socket.close();
     }
@@ -208,7 +208,7 @@ public class Multicast {
 
     private synchronized void newChild(String publicHostName, int publicHostPort, String anotherHostName, int anotherHostPort) throws Exception {
         this.thisPeer = new Node(BigDecimal.ZERO, publicHostName, publicHostPort);  // 0 = id that is not used, except here
-        Socket socket = new Socket(anotherHostName, anotherHostPort);
+        Socket socket = SSL.generateSSLSocket(anotherHostName, anotherHostPort);
         Message message = new Message(NewChildRequest, this.thisPeer);
         send(socket, message);
         Message answer = receive(socket);
@@ -216,15 +216,17 @@ public class Multicast {
         thisPeer = root.getNode(answer.getReceivers().get(0));
         parent = root.getParent(thisPeer);
         send(socket, new Message(NewChildAcceptedAck, thisPeer, parent.getId()));
+        socket.close();
     }
 
     private void pingParentRequest() {
         while (true) {
             try {
                 if (parent != null) {
-                    Socket socket = new Socket(parent.getHostName(), parent.getPort());
+                    Socket socket = SSL.generateSSLSocket(parent.getHostName(), parent.getPort());
                     send(socket, new Message(PingParentRequest, thisPeer, parent.getId()));
                     Message answer = receive(socket);
+                    socket.close();
                     if (answer == null)
                         changeParentRequest();
                     else if (!answer.getOperation().equals(PingParentConfirmation))
@@ -248,7 +250,7 @@ public class Multicast {
 
     private synchronized boolean changeParentRequestAux(Node root, Node thisPeer) throws Exception {
         boolean parentChanged = false;
-        Socket socket = new Socket(root.getHostName(), root.getPort());
+        Socket socket = SSL.generateSSLSocket(root.getHostName(), root.getPort());
         send(socket, new Message(ChangeParentRequest, thisPeer, root.getId()));
         Message answer = receive(socket);
         if (answer == null) {
