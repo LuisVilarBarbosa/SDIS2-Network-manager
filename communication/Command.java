@@ -44,5 +44,53 @@ public class Command {
                 e.printStackTrace();
             }
         }
+        else if(command.equals("GET_FILE")) {
+            String filepath = args.get(0);
+            BigDecimal peerId = getPeers(1)[0];
+
+            // Do something
+        }
+        else if(command.equals("SEND_COMMAND")) {
+            String so = "-windows"; //default
+            String commandToExecute;
+            BigDecimal[] peers;
+            if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
+                so = args.get(0);
+                commandToExecute = args.get(1);
+                peers = getPeers(2);
+            }
+            else {
+                commandToExecute = args.get(0);
+                peers = getPeers(1);
+            }
+
+            // Do something
+        }
+        else if(command.equals("PORT")) {
+            String option = args.get(0);
+            int port = Integer.parseInt(args.get(1));
+
+            // Do something
+        }
+        else if(command.equals("TCP")) {
+            String option = args.get(0);
+
+            // Do something
+        }
+        else if(command.equals("UDP")) {
+            String option = args.get(0);
+
+            // Do something
+        }
+        else if(command.equals("HTTP")) {
+            String option = args.get(0);
+
+            // Do something
+        }
+        else if(command.equals("FTP")) {
+            String option = args.get(0);
+
+            // Do something
+        }
     }
 }
