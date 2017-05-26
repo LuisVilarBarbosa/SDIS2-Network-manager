@@ -25,6 +25,7 @@ class TCP {
             object = objectInputStream.readObject();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+            System.exit(1);
         }
         return object;
     }
