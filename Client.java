@@ -10,11 +10,9 @@ import login.CredentialAsker;
 import login.Registrator;
 
 public class Client {
-	public static void main(String args[]) {
-		if(args.length != 0) {
-			System.out.println("Client takes no arguments");
-			return;
-		}
+	public static Database db;
+	
+	public static boolean start() {
 		String username = CredentialAsker.requestUsername();
 		String password = CredentialAsker.requestPassword();
 		try {
@@ -22,34 +20,40 @@ public class Client {
 			if(registrator.register(username, password)) {
 				System.out.println("Login successful");
 				try {
-					Database db = new Database("database.db");
+					db = new Database("database.db");
 					if(db.open() != null) {
-						try {
-							db.updateUser(username, true);
-							//db.insertUser(username);
-						} catch (SQLException e) {
-							//TODO User already exists. Should we print something?
-							e.printStackTrace();
-						}
+						return true;
 					} else {
-						System.out.println("Database wasnt open");
+						return false;
 					}
-					db.close();
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
+					return false;
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.out.println("Error: Could not create database");
-					return;
+					return false;
 				} catch (SQLException e1) {
 					e1.printStackTrace();
 					System.out.println("Error: Database may not be open");
+					return false;
 				}
 			} else {
 				System.out.println("Failed to login");
 				System.out.println("Server response: " + registrator.getServerMessage());
+				return false;
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static void stop() {
+		try {
+			db.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
