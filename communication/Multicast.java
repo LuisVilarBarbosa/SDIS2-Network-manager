@@ -138,9 +138,31 @@ public class Multicast {
                             TransmitFile.receiveFile(message, this);
                         else if (message.getOperation().equals("ResendFile"))
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
-                        else if(message.getOperation().equals("SendCommand")) {
+                        else if (message.getOperation().equals("SendCommand")) {
                             String os = System.getProperty("os.name");
-                            System.out.println(os);
+                            String firstArg = ((ArrayList<String>) message.getBody()).get(0);
+                            ExecuteCommand ec = null;
+                            if ((firstArg.contains("windows") && os.contains("Windows"))
+                                    || (firstArg.contains("linux") && os.contains("Linux"))) {
+                                String[] cmdTemp = ((ArrayList<String>) message.getBody()).get(1).split(" ");
+                                ec = new ExecuteCommand(cmdTemp);
+                            } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
+                                String[] cmdTemp = ((ArrayList<String>) message.getBody()).get(0).split(" ");
+                                ec = new ExecuteCommand(cmdTemp);
+                            }
+                            if (ec != null) {
+                                ec.setStoreOutput(true);
+                                ec.run();
+                                Message response = new Message("SendCommandAck", getThisPeer(), ec.getErrorStreamLines(), message.getSender().getId());
+                                send(response);
+                            }
+                        }
+                        else if(message.getOperation().equals("SendCommandAck")) {
+                            System.out.println("entrei");
+                            ArrayList<String> outputStreamLines = ((ArrayList<String>)message.getBody());
+                            for (String line : outputStreamLines) {
+                                System.out.println(line);
+                            }
                         }
                     }
                 }

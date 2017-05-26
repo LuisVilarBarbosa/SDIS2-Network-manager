@@ -1,6 +1,7 @@
 import communication.Command;
 import communication.Multicast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.StringTokenizer;
@@ -53,11 +54,29 @@ public class NetworkManager {
         while(true) {
             System.out.println("Write 'list' to view the availale commands");
             Scanner s = new Scanner(System.in);
-            String cmd = s.nextLine();
-            String[] commands = cmd.split(" ");
-            System.out.println(commands.length);
-            String[] args = Arrays.copyOfRange(commands, 1, commands.length);
-            Command c = new Command(m, commands[0], args);
+
+            String readCommand = s.nextLine();
+            String[] commandsTemp = readCommand.split("\"");
+
+            ArrayList<String> finalCommands = new ArrayList<>();
+            for(int i = 0; i < commandsTemp.length; i++)
+            {
+                if(i != 1) {
+                    String[] tmp = commandsTemp[i].split(" ");
+                    for(int j = 0; j < tmp.length; j++) {
+                        if(!tmp[j].equals(""))
+                            finalCommands.add(tmp[j]);
+                    }
+                }
+                else {
+                    finalCommands.add(commandsTemp[i]);
+                }
+            }
+
+            String[] finalCommandsArr = new String[finalCommands.size()];
+            finalCommandsArr = finalCommands.toArray(finalCommandsArr);
+            String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
+            Command c = new Command(m, finalCommands.get(0), args);
             try {
                 if(!c.execute()) {
                     break;

@@ -30,8 +30,10 @@ public class Command implements Serializable {
 
     public BigDecimal[] getPeers(int startIndex) {
         List<String> peersTemp = args.subList(startIndex, args.size());
-        BigDecimal[] peers = new BigDecimal[args.size()-1];
-        for(int i = 0; i < args.size() - 1; i++) {
+        System.out.println(peersTemp.get(0));
+        BigDecimal[] peers = new BigDecimal[peersTemp.size()];
+        for(int i = 0; i < peersTemp.size(); i++) {
+            System.out.println("a");
             peers[i] = new BigDecimal(peersTemp.get(i));
         }
         return peers;
@@ -52,20 +54,17 @@ public class Command implements Serializable {
             // Do something
         }
         else if(command.equals("SEND_COMMAND")) {
-            String so = "";
-            String commandToExecute;
-            BigDecimal[] peers;
+            BigDecimal[] peers = {};
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
-                so = args.get(0);
-                commandToExecute = args.get(1);
-                peers = getPeers(2);
+                if(args.size() > 2)
+                    peers = getPeers(2);
             }
             else {
-                commandToExecute = args.get(0);
-                peers = getPeers(1);
+                if(args.size() > 1)
+                    peers = getPeers(1);
             }
 
-            Message msg = new Message("SendCommand", multicast.getThisPeer(), command, peers);
+            Message msg = new Message("SendCommand", multicast.getThisPeer(), args, peers);
             multicast.send(msg);
         }
         else if(command.equals("PORT")) {
