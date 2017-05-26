@@ -28,6 +28,7 @@ public class Client {
 							Date data = new Date(System.currentTimeMillis());
 							String path = "/home/myfile.ph";
 							db.insertFile(path, data, username);
+							db.deleteFile(path, username);
 						} catch (SQLException e) {
 							//TODO User already exists. Should we print something?
 							e.printStackTrace();

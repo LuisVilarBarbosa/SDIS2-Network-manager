@@ -33,6 +33,9 @@ public class Database {
 			+ "FOREIGN KEY(username) REFERENCES users(username));";
 	private static final String insertFileSQL = 
 			"INSERT INTO files (path, date, username) VALUEs (?, ?, ?);";
+	private static final String deleteFileSQL =
+			"DELETE FROM files "
+			+ "WHERE path LIKE ? AND username LIKE ?;";
 	
 	private final String dbPath;
 	private Connection dbConnection;
@@ -96,6 +99,13 @@ public class Database {
 		stmt.setString(1, path);
 		stmt.setDate(2, date);
 		stmt.setString(3, username);
+		return stmt.execute();
+	}
+	
+	public boolean deleteFile(String path, String username) throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(deleteFileSQL);
+		stmt.setString(1, path);
+		stmt.setString(2, username);
 		return stmt.execute();
 	}
 	
