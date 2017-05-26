@@ -155,7 +155,7 @@ public class Multicast {
         message.setLastSender(thisPeer);
         try {
             for (Node n : thisPeer.getChildren()) {
-                if (!lastSender.equals(n))
+                if (!lastSender.equals(n) && thisPeer.isDescendant(root.getNode(n.getId())))
                     send(n.getHostName(), n.getPort(), message);
             }
             if (parent != null) {
