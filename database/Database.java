@@ -39,6 +39,9 @@ public class Database {
 	private static final String selectFileSQL =
 			"SELECT * FROM files "
 			+ "WHERE path LIKE ?;";
+	private static final String selectFileOfUserSQL =
+			"SELECT * FROM files "
+			+ "WHERE path LIKE ? AND user_id = ?";
 	
 	private final String dbPath;
 	private Connection dbConnection;
@@ -142,6 +145,16 @@ public class Database {
 	public ResultSet searchFile(String path) throws SQLException {
 		PreparedStatement stmt = this.dbConnection.prepareStatement(selectFileSQL);
 		stmt.setString(1, path);
+		ResultSet rs = stmt.executeQuery();
+		rs.next();
+		return rs;
+	}
+	
+	public ResultSet searchFile(String path, String username) throws SQLException {
+		int user_id = searchUser(username).getInt("id");
+		PreparedStatement stmt = this.dbConnection.prepareStatement(selectFileOfUserSQL);
+		stmt.setString(1, path);
+		stmt.setInt(2, user_id);
 		ResultSet rs = stmt.executeQuery();
 		rs.next();
 		return rs;

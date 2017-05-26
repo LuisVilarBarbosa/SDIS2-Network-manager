@@ -28,7 +28,8 @@ public class Client {
 							//db.insertUser(username);
 							Date data = new Date(System.currentTimeMillis());
 							String path = "/home/myfile.ph";
-							ResultSet rs = db.searchFile(path);
+							ResultSet rs = db.searchFile(path, username);
+							System.out.println(rs.getInt("user_id"));
 							//System.out.println(db.deleteFile(path, username));*/
 						} catch (SQLException e) {
 							//TODO User already exists. Should we print something?
