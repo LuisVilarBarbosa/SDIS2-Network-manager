@@ -13,7 +13,7 @@ public class Database {
 	private static final String createUserTableSQL =	
 			"CREATE TABLE users ("
 			+ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-			+ "username TEXT UNIQUE NOT NULL," 	//TODO unique??
+			+ "username TEXT UNIQUE NOT NULL," 	
 			+ "isAdmin BOOLEAN NOT NULL);";
 	private static final String insertUserSQL = 
 			"INSERT INTO users (username, isAdmin) VALUES (?, ?);";
@@ -22,20 +22,20 @@ public class Database {
 			+ "WHERE username LIKE ? ;";
 	private static final String selectUserSQL =
 			"SELECT * FROM users "
-			+ "WHERE username = ?;";
+			+ "WHERE username LIKE ?;";
 	
 	private static final String createFileTableSQL =
 			"CREATE TABLE files ("
 			+ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
 			+ "path TEXT UNIQUE NOT NULL,"
 			+ "date DATE NOT NULL,"
-			+ "username TEXT,"
-			+ "FOREIGN KEY(username) REFERENCES users(username));";
+			+ "user_id INTEGER,"
+			+ "FOREIGN KEY(user_id) REFERENCES users(id));";
 	private static final String insertFileSQL = 
-			"INSERT INTO files (path, date, username) VALUEs (?, ?, ?);";
+			"INSERT INTO files (path, date, user_id) VALUES (?, ?, ?);";
 	private static final String deleteFileSQL =
 			"DELETE FROM files "
-			+ "WHERE path LIKE ? AND username LIKE ?;";
+			+ "WHERE path LIKE ? AND user_id = ?;";
 	
 	private final String dbPath;
 	private Connection dbConnection;
@@ -71,7 +71,14 @@ public class Database {
 	
 	public boolean insertUser(String username) throws SQLException {
 		try {
-			searchUser(username);
+			ResultSet rs = searchUser(username);
+			if(rs == null) {
+				System.out.println("Search user failed");
+			} else {
+				rs.next();
+				System.out.println("NEXT");
+				System.out.println(rs.getString(2));
+			}
 		} catch (SQLException e) {
 			PreparedStatement stmt = this.dbConnection.prepareStatement(insertUserSQL);
 			stmt.setString(1, username);
@@ -88,25 +95,49 @@ public class Database {
 		return stmt.execute();
 	}
 	
+	/**
+	 * @param username
+	 * @return ResultSet pointing to the first row of results
+	 * @throws SQLException
+	 */
 	public ResultSet searchUser(String username) throws SQLException {
 		PreparedStatement stmt = this.dbConnection.prepareStatement(selectUserSQL);
 		stmt.setString(1, username);
-		return stmt.executeQuery();
+		ResultSet rs = stmt.executeQuery();
+		rs.next();
+		return rs;
 	}
 	
 	public boolean insertFile(String path, Date date, String username) throws SQLException {
+		ResultSet rs = searchUser(username);
+		int user_id = rs.getInt("id");
+		
 		PreparedStatement stmt = this.dbConnection.prepareStatement(insertFileSQL);
 		stmt.setString(1, path);
 		stmt.setDate(2, date);
-		stmt.setString(3, username);
+		stmt.setInt(3, user_id);
 		return stmt.execute();
 	}
 	
 	public boolean deleteFile(String path, String username) throws SQLException {
+		ResultSet rs = searchUser(username);
+		int user_id = rs.getInt("id");
+		
 		PreparedStatement stmt = this.dbConnection.prepareStatement(deleteFileSQL);
 		stmt.setString(1, path);
-		stmt.setString(2, username);
+		stmt.setInt(2, user_id);
 		return stmt.execute();
+	}
+	
+	public boolean updateFile(String path, Date date, String username) throws SQLException{
+		boolean delete = this.deleteFile(path, username);
+		Date data = new Date(System.currentTimeMillis());
+		boolean insert = this.insertFile(path, data, username);
+		return delete && insert;
+	}
+	
+	public ResultSet searchFile() {
+		return null;
 	}
 	
 	//TODO 	OU usamos SQL diretamente

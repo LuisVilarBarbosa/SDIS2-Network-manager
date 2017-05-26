@@ -2,6 +2,7 @@
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import database.Database;
@@ -24,11 +25,11 @@ public class Client {
 					Database db = new Database("database.db");
 					if(db.open() != null) {
 						try {
-							db.insertUser(username);
+							//db.insertUser(username);
 							Date data = new Date(System.currentTimeMillis());
 							String path = "/home/myfile.ph";
-							db.insertFile(path, data, username);
-							db.deleteFile(path, username);
+							db.updateFile(path, data, username);
+							//System.out.println(db.deleteFile(path, username));*/
 						} catch (SQLException e) {
 							//TODO User already exists. Should we print something?
 							e.printStackTrace();
