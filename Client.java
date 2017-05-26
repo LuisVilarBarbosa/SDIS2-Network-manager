@@ -1,6 +1,7 @@
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.SQLException;
 
 import database.Database;
@@ -24,7 +25,9 @@ public class Client {
 					if(db.open() != null) {
 						try {
 							db.insertUser(username);
-							db.deleteUser(username);
+							Date data = new Date(System.currentTimeMillis());
+							String path = "/home/myfile.ph";
+							db.insertFile(path, data, username);
 						} catch (SQLException e) {
 							//TODO User already exists. Should we print something?
 							e.printStackTrace();

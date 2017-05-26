@@ -3,6 +3,7 @@ package database;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,6 +23,17 @@ public class Database {
 	private static final String selectUserSQL =
 			"SELECT * FROM users "
 			+ "WHERE username = ?;";
+	
+	private static final String createFileTableSQL =
+			"CREATE TABLE files ("
+			+ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+			+ "path TEXT UNIQUE NOT NULL,"
+			+ "date DATE NOT NULL,"
+			+ "username TEXT,"
+			+ "FOREIGN KEY(username) REFERENCES users(username));";
+	private static final String insertFileSQL = 
+			"INSERT INTO files (path, date, username) VALUEs (?, ?, ?);";
+	
 	private final String dbPath;
 	private Connection dbConnection;
 	
@@ -38,6 +50,8 @@ public class Database {
 	private void init() throws ClassNotFoundException, SQLException {
 		this.open();
 		PreparedStatement stmt = this.dbConnection.prepareStatement(createUserTableSQL);
+		stmt.execute();
+		stmt = this.dbConnection.prepareStatement(createFileTableSQL);
 		stmt.execute();
 	}
 	
@@ -75,6 +89,14 @@ public class Database {
 		PreparedStatement stmt = this.dbConnection.prepareStatement(selectUserSQL);
 		stmt.setString(1, username);
 		return stmt.executeQuery();
+	}
+	
+	public boolean insertFile(String path, Date date, String username) throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(insertFileSQL);
+		stmt.setString(1, path);
+		stmt.setDate(2, date);
+		stmt.setString(3, username);
+		return stmt.execute();
 	}
 	
 	//TODO 	OU usamos SQL diretamente
