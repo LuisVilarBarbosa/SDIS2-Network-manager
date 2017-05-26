@@ -50,7 +50,6 @@ public class Multicast {
         newChild(publicHostName, publicHostPort, anotherHostName, anotherHostPort);
         generateDispatcherThread();
         generatePingParentThread();
-        TransmitFile.sendFile(this, "medicoes.txt");
     }
 
     public Node getThisPeer() {
@@ -141,24 +140,7 @@ public class Multicast {
                         else if (message.getOperation().equals("ResendFile"))
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
                         else if (message.getOperation().equals("SendCommand")) {
-                            String os = System.getProperty("os.name");
-                            String firstArg = ((ArrayList<String>) message.getBody()).get(0);
-                            ExecuteCommand ec = null;
-                            if ((firstArg.contains("windows") && os.contains("Windows"))
-                                    || (firstArg.contains("linux") && os.contains("Linux"))) {
-                                String[] cmdTemp = ((ArrayList<String>) message.getBody()).get(1).split(" ");
-                                ec = new ExecuteCommand(cmdTemp);
-                            } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
-                                String[] cmdTemp = ((ArrayList<String>) message.getBody()).get(0).split(" ");
-                                ec = new ExecuteCommand(cmdTemp);
-                            }
-                            if (ec != null) {
-                                ec.setStoreOutput(true);
-                                ec.run();
-                                CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-                                Message response = new Message("SendCommandAck", getThisPeer(), cr, message.getSender().getId());
-                                send(response);
-                            }
+                            executeCommand(message);
                         }
                         else if(message.getOperation().equals("SendCommandAck")) {
                             ((CommandResponse)message.getBody()).print();
@@ -170,6 +152,27 @@ public class Multicast {
             connectionSocket.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void executeCommand(Message message) throws Exception {
+        String os = System.getProperty("os.name");
+        String firstArg = ((ArrayList<String>) message.getBody()).get(0);
+        ExecuteCommand ec = null;
+        if ((firstArg.contains("windows") && os.contains("Windows"))
+                || (firstArg.contains("linux") && os.contains("Linux"))) {
+            String[] cmdTemp = ((ArrayList<String>) message.getBody()).get(1).split(" ");
+            ec = new ExecuteCommand(cmdTemp);
+        } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
+            String[] cmdTemp = ((ArrayList<String>) message.getBody()).get(0).split(" ");
+            ec = new ExecuteCommand(cmdTemp);
+        }
+        if (ec != null) {
+            ec.setStoreOutput(true);
+            ec.run();
+            CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
+            Message response = new Message("SendCommandAck", getThisPeer(), cr, message.getSender().getId());
+            send(response);
         }
     }
 

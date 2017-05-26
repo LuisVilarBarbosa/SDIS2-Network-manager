@@ -14,9 +14,6 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Created by paulo on 18/05/2017.
- */
 public class TransmitFile {
     /**
      * Attempts to calculate the size of a file or directory.
@@ -168,11 +165,9 @@ public class TransmitFile {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("totalNumChunks" + totalNumChunks);
                 for(int i = 0; i < totalNumChunks; i++) {
                     Path pathTemp = Paths.get("database/temp/" + peerId + "/" + folderName + "/" + i);
                     if(!Files.exists(pathTemp)) {
-                        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                         ack = new Message("ResendFile", mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
                         break;
                     }
@@ -185,12 +180,9 @@ public class TransmitFile {
                             FileOutputStream fos = new FileOutputStream(file, true);
 
                             byte[] content = new byte[64000];
-                            int lol = fis.read(content);
+                            int numBytes = fis.read(content);
 
-                            byte[] body = new byte[lol];
-                            body = Arrays.copyOfRange(content, 0, lol);
-
-                            System.out.println("testing..." + lol);
+                            byte[] body = Arrays.copyOfRange(content, 0, numBytes);
 
                             if (!file.exists())
                                 file.createNewFile();

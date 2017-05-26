@@ -32,10 +32,8 @@ public class Command implements Serializable {
 
     public BigDecimal[] getPeers(int startIndex) {
         List<String> peersTemp = args.subList(startIndex, args.size());
-        System.out.println(peersTemp.get(0));
         BigDecimal[] peers = new BigDecimal[peersTemp.size()];
         for(int i = 0; i < peersTemp.size(); i++) {
-            System.out.println("a");
             peers[i] = new BigDecimal(peersTemp.get(i));
         }
         return peers;

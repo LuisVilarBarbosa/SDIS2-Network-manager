@@ -3,9 +3,6 @@ package files;
 import java.io.Serializable;
 import java.nio.file.attribute.UserPrincipal;
 
-/**
- * Created by paulo on 19/05/2017.
- */
 public class FileData implements Serializable {
     private String filename;
     private long filesize;
