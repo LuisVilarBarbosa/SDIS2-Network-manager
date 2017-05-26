@@ -36,6 +36,9 @@ public class Database {
 	private static final String deleteFileSQL =
 			"DELETE FROM files "
 			+ "WHERE path LIKE ? AND user_id = ?;";
+	private static final String selectFileSQL =
+			"SELECT * FROM files "
+			+ "WHERE path LIKE ?;";
 	
 	private final String dbPath;
 	private Connection dbConnection;
@@ -136,8 +139,12 @@ public class Database {
 		return delete && insert;
 	}
 	
-	public ResultSet searchFile() {
-		return null;
+	public ResultSet searchFile(String path) throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(selectFileSQL);
+		stmt.setString(1, path);
+		ResultSet rs = stmt.executeQuery();
+		rs.next();
+		return rs;
 	}
 	
 	//TODO 	OU usamos SQL diretamente
