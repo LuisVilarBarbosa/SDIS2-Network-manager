@@ -1,5 +1,7 @@
-package communication;
+package commands;
 
+import communication.Message;
+import communication.Multicast;
 import files.TransmitFile;
 
 import java.io.Serializable;

@@ -1,5 +1,7 @@
 package communication;
 
+import commands.CommandResponse;
+import commands.ExecuteCommand;
 import files.FileData;
 import files.TransmitFile;
 
@@ -153,16 +155,13 @@ public class Multicast {
                             if (ec != null) {
                                 ec.setStoreOutput(true);
                                 ec.run();
-                                Message response = new Message("SendCommandAck", getThisPeer(), ec.getErrorStreamLines(), message.getSender().getId());
+                                CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
+                                Message response = new Message("SendCommandAck", getThisPeer(), cr, message.getSender().getId());
                                 send(response);
                             }
                         }
                         else if(message.getOperation().equals("SendCommandAck")) {
-                            System.out.println("entrei");
-                            ArrayList<String> outputStreamLines = ((ArrayList<String>)message.getBody());
-                            for (String line : outputStreamLines) {
-                                System.out.println(line);
-                            }
+                            ((CommandResponse)message.getBody()).print();
                         }
                     }
                 }
