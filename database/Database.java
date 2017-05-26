@@ -20,6 +20,10 @@ public class Database {
 	private static final String deleteUserSQL =
 			"DELETE FROM users "
 			+ "WHERE username LIKE ? ;";
+	private static final String updateUserSQL =
+			"UPDATE users "
+			+ "SET isAdmin = ? "
+			+ "WHERE username LIKE ? ;";
 	private static final String selectUserSQL =
 			"SELECT * FROM users "
 			+ "WHERE username LIKE ?;";
@@ -76,19 +80,16 @@ public class Database {
 	}
 	
 	public boolean insertUser(String username) throws SQLException {
-		try {
-			ResultSet rs = searchUser(username);
-			if(rs == null) {
-				System.out.println("Search user failed");
-			} else {
-				rs.next();
-				System.out.println("NEXT");
-				System.out.println(rs.getString(2));
-			}
-		} catch (SQLException e) {
+		boolean b = insertUser(username, false);
+		System.out.println(b);
+		return b;
+	}
+	
+	public boolean insertUser(String username, boolean isAdmin) throws SQLException {
+		if(searchUser(username).isAfterLast()) {
 			PreparedStatement stmt = this.dbConnection.prepareStatement(insertUserSQL);
 			stmt.setString(1, username);
-			stmt.setBoolean(2, false);
+			stmt.setBoolean(2, isAdmin);
 			return stmt.execute();
 		}
 		//In case user already exists
@@ -98,6 +99,13 @@ public class Database {
 	public boolean deleteUser(String username) throws SQLException {
 		PreparedStatement stmt = this.dbConnection.prepareStatement(deleteUserSQL);
 		stmt.setString(1, username);
+		return stmt.execute();
+	}
+	
+	public boolean updateUser(String username, boolean isAdmin) throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(updateUserSQL);
+		stmt.setBoolean(1, isAdmin);
+		stmt.setString(2, username);
 		return stmt.execute();
 	}
 	
