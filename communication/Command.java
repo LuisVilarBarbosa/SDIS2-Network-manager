@@ -2,13 +2,14 @@ package communication;
 
 import files.TransmitFile;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Command {
+public class Command implements Serializable {
     private String command;
-    private ArrayList<String> args;
+    private ArrayList<String> args = new ArrayList<String>();
     private Multicast multicast;
 
     public Command(Multicast mc, String command, String... args) {
@@ -28,15 +29,15 @@ public class Command {
     }
 
     public BigDecimal[] getPeers(int startIndex) {
-        List<String> peersTemp = args.subList(startIndex, args.size() - 1);
-        BigDecimal[] peers = new BigDecimal[args.size()-2];
-        for(int i = 0; i < args.size() - 2; i++) {
+        List<String> peersTemp = args.subList(startIndex, args.size());
+        BigDecimal[] peers = new BigDecimal[args.size()-1];
+        for(int i = 0; i < args.size() - 1; i++) {
             peers[i] = new BigDecimal(peersTemp.get(i));
         }
         return peers;
     }
 
-    public void execute() {
+    public boolean execute() throws Exception {
         if(command.equals("SEND_FILE")) {
             try {
                 TransmitFile.sendFile(multicast, args.get(0), getPeers(1));
@@ -51,7 +52,7 @@ public class Command {
             // Do something
         }
         else if(command.equals("SEND_COMMAND")) {
-            String so = "-windows"; //default
+            String so = "";
             String commandToExecute;
             BigDecimal[] peers;
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
@@ -64,33 +65,51 @@ public class Command {
                 peers = getPeers(1);
             }
 
-            // Do something
+            Message msg = new Message("SendCommand", multicast.getThisPeer(), command, peers);
+            multicast.send(msg);
         }
         else if(command.equals("PORT")) {
             String option = args.get(0);
             int port = Integer.parseInt(args.get(1));
+            BigDecimal[] peers = getPeers(2);
 
-            // Do something
+            Message msg = new Message("PORT", multicast.getThisPeer(), this, peers);
+            multicast.send(msg);
         }
         else if(command.equals("TCP")) {
             String option = args.get(0);
 
-            // Do something
+            BigDecimal[] peers = getPeers(1);
+
+            Message msg = new Message("TCP", multicast.getThisPeer(), this, peers);
+            multicast.send(msg);
         }
         else if(command.equals("UDP")) {
             String option = args.get(0);
 
-            // Do something
+            BigDecimal[] peers = getPeers(1);
+
+            Message msg = new Message("UDP", multicast.getThisPeer(), this, peers);
+            multicast.send(msg);
         }
         else if(command.equals("HTTP")) {
             String option = args.get(0);
 
-            // Do something
+            BigDecimal[] peers = getPeers(1);
+
+            Message msg = new Message("HTTP", multicast.getThisPeer(), this, peers);
+            multicast.send(msg);
         }
         else if(command.equals("FTP")) {
             String option = args.get(0);
 
-            // Do something
+            BigDecimal[] peers = getPeers(1);
+
+            Message msg = new Message("FTP", multicast.getThisPeer(), this, peers);
+            multicast.send(msg);
         }
+        else if(command.equals("EXIT"))
+            return false;
+        return true;
     }
 }

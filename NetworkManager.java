@@ -1,6 +1,9 @@
+import communication.Command;
 import communication.Multicast;
 
+import java.util.Arrays;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class NetworkManager {
 
@@ -43,6 +46,26 @@ public class NetworkManager {
         NetworkManager n = new NetworkManager();
 
         n.startMenu();
+        n.receiveCommand(m);
+    }
+
+    private void receiveCommand(Multicast m) {
+        while(true) {
+            System.out.println("Write 'list' to view the availale commands");
+            Scanner s = new Scanner(System.in);
+            String cmd = s.nextLine();
+            String[] commands = cmd.split(" ");
+            System.out.println(commands.length);
+            String[] args = Arrays.copyOfRange(commands, 1, commands.length);
+            Command c = new Command(m, commands[0], args);
+            try {
+                if(!c.execute()) {
+                    break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private int getResponse(int min, int max) {
@@ -76,30 +99,11 @@ public class NetworkManager {
     private void login() {
         System.out.println("Email: ");
         System.out.println("Password: ");
-        options();
     }
 
     private void register() {
 
     }
 
-    private void options() {
-        StringBuilder sb = new StringBuilder("Options:\n");
-        sb.append("1-File/folder transfer\n");
-        sb.append("2-File/folder consulting\n");
-        sb.append("3-Enable/disable networking services\n");
-        sb.append("4-Remote execution of commands\n");
-        System.out.println(sb);
-        int option = getResponse(1,4);
-        switch (option) {
-            case 1:
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-        }
-    }
+
 }

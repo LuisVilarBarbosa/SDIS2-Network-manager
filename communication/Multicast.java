@@ -138,6 +138,10 @@ public class Multicast {
                             TransmitFile.receiveFile(message, this);
                         else if (message.getOperation().equals("ResendFile"))
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
+                        else if(message.getOperation().equals("SendCommand")) {
+                            String os = System.getProperty("os.name");
+                            System.out.println(os);
+                        }
                     }
                 }
             }
@@ -181,12 +185,12 @@ public class Multicast {
 
     private void send(Socket socket, Message message) throws Exception {
         TCP.send(socket, message);
-        System.out.println("< " + message);
+        //System.out.println("< " + message);
     }
 
     private Message receive(Socket socket) throws IOException {
         Message message = (Message) TCP.receive(socket);
-        System.out.println("> " + message);
+        //System.out.println("> " + message);
         return message;
     }
 
