@@ -11,10 +11,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TransmitFile {
+    public static final String SendFile = "SendFile";
+    public static final String SendFileAck = "SendFileAck";
+    public static final String ResendFile = "ResendFile";
+
     /**
      * Attempts to calculate the size of a file or directory.
      *
@@ -75,13 +80,8 @@ public class TransmitFile {
         return true;
     }
 
-    public static void sendFile(Multicast mc, String filepath, BigDecimal... peer) throws Exception {
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(filepath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+    public static void sendFile(Multicast mc, String filepath, BigDecimal... peer) throws IOException, NoSuchAlgorithmException {
+        FileInputStream fis = new FileInputStream(filepath);
 
         File file = new File(filepath);
         String fileName = file.getName();
@@ -115,18 +115,13 @@ public class TransmitFile {
         while(numBytesRead < filesize) {
             byte[] body = new byte[64000];
             int numRead = fis.read(body);
-            byte[] content = new byte[numRead];
             numBytesRead+=numRead;
-            content = Arrays.copyOfRange(body, 0, numRead);
+            byte[] content = Arrays.copyOfRange(body, 0, numRead);
 
             FileData partialFile = new FileData(fileName, filesize, filepath, hashedFileId, content, actualChunk, totalNumChunks);
 
-            Message msg = new Message("SendFile", mc.getThisPeer(), partialFile, peer);
-            try {
-                mc.send(msg);
-            } catch (Exception e) {
-                System.out.println("Error in sending chunk number " + actualChunk);
-            }
+            Message msg = new Message(SendFile, mc.getThisPeer(), partialFile, peer);
+            mc.send(msg);
 
             actualChunk++;
         }
@@ -134,49 +129,49 @@ public class TransmitFile {
 
     public static void receiveFile(Message msg, Multicast mc) {
         /* Get data from message */
-        String folderName = ((FileData)msg.getBody()).getHashedFileId();
-        int actualChunk = ((FileData)msg.getBody()).getActualChunk();
-        double totalNumChunks = ((FileData)msg.getBody()).getTotalNumChunks();
-        long filesize = ((FileData)msg.getBody()).getFilesize();
-        String filename = ((FileData)msg.getBody()).getFilename();
-        String peerId = ((Node)msg.getSender()).getHostName() + "_" + ((Node)msg.getSender()).getPort();
+        FileData fileData = (FileData)msg.getBody();
+        String folderName = fileData.getHashedFileId();
+        int actualChunk = fileData.getActualChunk();
+        double totalNumChunks = fileData.getTotalNumChunks();
+        long filesize = fileData.getFilesize();
+        Node sender = msg.getSender();
+        String filename = fileData.getFilename();
+        String peerId = sender.getHostName() + "_" + sender.getPort();
 
-        Path path = Paths.get("database/temp/" + peerId + "/" + folderName + "/" + actualChunk);
-        Path folderPath = Paths.get("database/temp/" + peerId + "/" + folderName);
+        String tempFolder = "database/temp/" + peerId + "/" + folderName;
+        Path path = Paths.get(tempFolder + "/" + actualChunk);
+        Path folderPath = Paths.get(tempFolder);
 
-        byte[] data = (byte[])((FileData)msg.getBody()).getBody();
+        byte[] data = (byte[])fileData.getBody();
         try {
             Files.createDirectories(path.getParent());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             Files.write(path, data);
         } catch (IOException e) {
             e.printStackTrace();
         }
         if(actualChunk == (totalNumChunks - 1)) {
-            Message ack;
+            Message message;
             if (size(folderPath) == filesize) {
-                ack = new Message("SendFileAck", mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
-                Path pathfFinalFolder = Paths.get("database/" + peerId + "/" + folderName + "/" + filename);
+                String filePath = "database/" + peerId + "/" + folderName + "/" + filename;
+                message = new Message(SendFileAck, mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
+                Path pathfFinalFolder = Paths.get(filePath);
                 try {
                     Files.createDirectories(pathfFinalFolder.getParent());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 for(int i = 0; i < totalNumChunks; i++) {
-                    Path pathTemp = Paths.get("database/temp/" + peerId + "/" + folderName + "/" + i);
+                    Path pathTemp = Paths.get(tempFolder + "/" + i);
                     if(!Files.exists(pathTemp)) {
-                        ack = new Message("ResendFile", mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
+                        message = new Message(ResendFile, mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
                         break;
                     }
                     else {
                         try {
-                            File fileTemp = new File("database/temp/" + peerId + "/" + folderName + "/" + i);
+                            File fileTemp = new File(tempFolder + "/" + i);
                             FileInputStream fis = new FileInputStream(fileTemp);
 
-                            File file = new File("database/" + peerId + "/" + folderName + "/" + filename);
+                            File file = new File(filePath);
                             FileOutputStream fos = new FileOutputStream(file, true);
 
                             byte[] content = new byte[64000];
@@ -197,16 +192,12 @@ public class TransmitFile {
                         }
                     }
                 }
-                File pathToDelete = new File("database/temp/" + peerId + "/" + folderName);
+                File pathToDelete = new File(tempFolder);
                 deleteDirectory(pathToDelete);
             }
             else
-                ack = new Message("ResendFile", mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
-            try {
-                mc.send(ack);
-            } catch (Exception e) {
-                System.out.println("Error in " + ack.getOperation());
-            }
+                message = new Message(ResendFile, mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
+            mc.send(message);
         }
     }
 }

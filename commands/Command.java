@@ -40,7 +40,7 @@ public class Command implements Serializable {
         return peers;
     }
 
-    public boolean execute() throws Exception {
+    public boolean execute() {
         if(command.equals("SEND_FILE")) {
             try {
                 TransmitFile.sendFile(multicast, args.get(0), getPeers(1));

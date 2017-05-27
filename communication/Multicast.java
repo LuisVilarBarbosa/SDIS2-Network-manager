@@ -57,7 +57,8 @@ public class Multicast {
 
     public void showConnectedPeers() {
         StringBuilder stringBuilder = new StringBuilder();
-        getConnectedPeers(root, stringBuilder, "");
+        if(root != null)
+            getConnectedPeers(root, stringBuilder, "");
         System.out.println(stringBuilder);
     }
 
@@ -121,9 +122,9 @@ public class Multicast {
                             newChildAdded(message);
                         else if (message.getOperation().equals(RemoveNode))
                             removeNode(message);
-                        else if (message.getOperation().equals("SendFile"))
+                        else if (message.getOperation().equals(TransmitFile.SendFile))
                             TransmitFile.receiveFile(message, this);
-                        else if (message.getOperation().equals("ResendFile"))
+                        else if (message.getOperation().equals(TransmitFile.ResendFile))
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
                         else if (message.getOperation().equals("SendCommand"))
                             Command.executeCommand(this, message);

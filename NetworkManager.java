@@ -39,7 +39,6 @@ public class NetworkManager {
                     return;
                 }
             }
-
         } else {
         	System.out.println("Could not open database");
         	return;
@@ -61,7 +60,7 @@ public class NetworkManager {
             if(readCommand.toLowerCase().contains("list")){
                 System.out.println("AVAILABLE COMMANDS:");
                 System.out.println("   SEND_FILE <file path> [<peer_id>...]\n" +
-                        "   SEND_COMMAND [-windows|-linux] <command> [<peer_id>...]\n" +
+                        "   SEND_COMMAND [-windows|-linux] \"<command>\" [<peer_id>...]\n" +
                         "   PORT <-enable|-disable> <port number> [<peer_id>...]\n" +
                         "   TCP <-enable|-disable> [<peer_id>...]\n" +
                         "   HTTP <-enable|-disable> [<peer_id>...]\n" +
@@ -76,7 +75,7 @@ public class NetworkManager {
                     if (i != 1) {
                         String[] tmp = commandsTemp[i].split(" ");
                         for (int j = 0; j < tmp.length; j++) {
-                            if (!tmp[j].equals(""))
+                            if (!tmp[j].isEmpty())
                                 finalCommands.add(tmp[j]);
                         }
                     } else {
@@ -88,13 +87,7 @@ public class NetworkManager {
                 finalCommandsArr = finalCommands.toArray(finalCommandsArr);
                 String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
                 Command c = new Command(m, finalCommands.get(0), args);
-                try {
-                    if (!c.execute()) {
-                        break;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                c.execute();
             }
         }
     }
