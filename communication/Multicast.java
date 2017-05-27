@@ -143,13 +143,13 @@ public class Multicast {
         }
     }
 
-
     private void propagateMessage(Message message) {
         Node lastSender = message.getLastSender();
         message.setLastSender(thisPeer);
+        ArrayList<BigDecimal> receivers = message.getReceivers();
 
         for (Node n : thisPeer.getChildren()) {
-            if (!lastSender.equals(n)) {
+            if (!lastSender.equals(n) && descendantIsReceiver(receivers)) {
                 try {
                     send(n.getHostName(), n.getPort(), message);
                 } catch (Exception e) {
@@ -166,6 +166,17 @@ public class Multicast {
                 }
             }
         }
+    }
+
+    private boolean descendantIsReceiver(ArrayList<BigDecimal> receivers) {
+        if(receivers.isEmpty())
+            return true;
+        for (BigDecimal receiverId : receivers) {
+            Node receiver = root.getNode(receiverId);
+            if(thisPeer.isDescendant(receiver))
+                return true;
+        }
+        return false;
     }
 
     public void send(Message message) {
