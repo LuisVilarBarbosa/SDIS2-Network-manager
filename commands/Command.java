@@ -12,7 +12,7 @@ import java.util.List;
 public class Command implements Serializable {
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
-    private static Multicast multicast;
+    private Multicast multicast;
 
     public Command(Multicast mc, String command, String... args) {
         this.command = command;
@@ -112,7 +112,7 @@ public class Command implements Serializable {
         return true;
     }
 
-    public static void executeTCP(Message message) throws Exception {
+    public static void executeTCP(Multicast mc, Message message) throws Exception {
         String option = (String)message.getBody();
         ArrayList<String> args = new ArrayList<>();
         if(System.getProperty("os.name").contains("Windows")) {
@@ -120,17 +120,19 @@ public class Command implements Serializable {
             if (option.contains("disable")) {
                 args.add("start-process powershell -ArgumentList '-noprofile Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
             }
+            else if(option.contains("disable"))
+                args.add("start-process powershell -ArgumentList '-noprofile Enable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
             String[] allArgs = new String[args.size()];
             allArgs = args.toArray(allArgs);
             ExecuteCommand ec = new ExecuteCommand(allArgs);
             ec.run();
             CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-            Message response = new Message("TCPAck", multicast.getThisPeer(), cr, message.getSender().getId());
-            multicast.send(response);
+            Message response = new Message("TCPAck", mc.getThisPeer(), cr, message.getSender().getId());
+            mc.send(response);
         }
     }
 
-    public static void executeCommand(Message message) throws Exception {
+    public static void executeCommand(Multicast mc, Message message) throws Exception {
         String os = System.getProperty("os.name");
         ArrayList<String> body = null;
         if(message.getBody() instanceof  ArrayList<?>)
@@ -149,8 +151,8 @@ public class Command implements Serializable {
             ec.setStoreOutput(true);
             ec.run();
             CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-            Message response = new Message("SendCommandAck", multicast.getThisPeer(), cr, message.getSender().getId());
-            multicast.send(response);
+            Message response = new Message("SendCommandAck", mc.getThisPeer(), cr, message.getSender().getId());
+            mc.send(response);
         }
     }
 
