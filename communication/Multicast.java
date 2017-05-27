@@ -286,7 +286,7 @@ public class Multicast {
             throw new Exception("Unable to send a change parent request to a new parent.");
     }
 
-    private synchronized boolean changeParentRequestAux(Node root, Node thisPeer) {
+    private boolean changeParentRequestAux(Node root, Node thisPeer) {
         boolean parentChanged = false;
         try {
             Socket socket = SSL.generateSSLSocket(root.getHostName(), root.getPort());
@@ -304,7 +304,7 @@ public class Multicast {
         } catch (Exception e) {
             for (Node child : root.getChildren()) {
                 if (!thisPeer.equals(child) && !thisPeer.isDescendant(child))
-                    if (changeParentRequestAux(child, thisPeer))
+                    if (parentChanged = changeParentRequestAux(child, thisPeer))
                         break;
             }
         }
@@ -317,7 +317,7 @@ public class Multicast {
         send(socket, new Message(ChangeParentConfirmation, thisPeer, newChild.getId()));
         send(new Message(ChangeNodeParent, thisPeer, newChild));
         Message answer = receive(socket);
-        if (!answer.equals(ChangeParentConfirmationAck))
+        if (!answer.getOperation().equals(ChangeParentConfirmationAck))
             throw new Exception("Problem receiving the acknowledgment of the new child parent has changed.");
     }
 
