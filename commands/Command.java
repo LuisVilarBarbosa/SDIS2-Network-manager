@@ -12,7 +12,7 @@ import java.util.List;
 public class Command implements Serializable {
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
-    private Multicast multicast;
+    private static Multicast multicast;
 
     public Command(Multicast mc, String command, String... args) {
         this.command = command;
@@ -110,6 +110,48 @@ public class Command implements Serializable {
         else if(command.equals("EXIT"))
             return false;
         return true;
+    }
+
+    public static void executeTCP(Message message) throws Exception {
+        String option = (String)message.getBody();
+        ArrayList<String> args = new ArrayList<>();
+        if(System.getProperty("os.name").contains("Windows")) {
+            args.add("powershell.exe");
+            if (option.contains("disable")) {
+                args.add("start-process powershell -ArgumentList '-noprofile Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
+            }
+            String[] allArgs = new String[args.size()];
+            allArgs = args.toArray(allArgs);
+            ExecuteCommand ec = new ExecuteCommand(allArgs);
+            ec.run();
+            CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
+            Message response = new Message("TCPAck", multicast.getThisPeer(), cr, message.getSender().getId());
+            multicast.send(response);
+        }
+    }
+
+    public static void executeCommand(Message message) throws Exception {
+        String os = System.getProperty("os.name");
+        ArrayList<String> body = null;
+        if(message.getBody() instanceof  ArrayList<?>)
+            body = ((ArrayList<String>) message.getBody());
+        String firstArg = body.get(0);
+        ExecuteCommand ec = null;
+        if ((firstArg.contains("windows") && os.contains("Windows"))
+                || (firstArg.contains("linux") && os.contains("Linux"))) {
+            String[] cmdTemp = body.get(1).split(" ");
+            ec = new ExecuteCommand(cmdTemp);
+        } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
+            String[] cmdTemp = body.get(0).split(" ");
+            ec = new ExecuteCommand(cmdTemp);
+        }
+        if (ec != null) {
+            ec.setStoreOutput(true);
+            ec.run();
+            CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
+            Message response = new Message("SendCommandAck", multicast.getThisPeer(), cr, message.getSender().getId());
+            multicast.send(response);
+        }
     }
 
 }

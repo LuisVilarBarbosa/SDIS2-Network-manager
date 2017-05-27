@@ -143,33 +143,12 @@ public class Multicast {
                             TransmitFile.receiveFile(message, this);
                         else if (message.getOperation().equals("ResendFile"))
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
-                        else if (message.getOperation().equals("SendCommand")) {
-                            executeCommand(message);
-			}
-                        else if(message.getOperation().equals("SendCommandAck") || message.getOperation().equals("TCPAck")) {
+                        else if (message.getOperation().equals("SendCommand"))
+                            Command.executeCommand(message);
+                        else if(message.getOperation().equals("SendCommandAck") || message.getOperation().equals("TCPAck"))
                             ((CommandResponse)message.getBody()).print();
-                        }
-                        else if(message.getOperation().equals("TCP")){
-                            String option = (String)message.getBody();
-                            ArrayList<String> args = new ArrayList<>();
-                            if(System.getProperty("os.name").contains("Windows")) {
-                                args.add("powershell.exe");
-                                if (option.contains("disable")) {
-                                    args.add("start-process powershell -ArgumentList '-noprofile Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
-                                    args.add("start-process powershell -ArgumentList '-noprofile Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip6' -verb RunAs");
-                                } else if (option.contains("enable") && System.getProperty("os.name").contains("Windows")){
-                                    args.add("start-process powershell -ArgumentList '-noprofile Enable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
-                                    args.add("start-process powershell -ArgumentList '-noprofile Enable-NetAdapterBinding -Name * -ComponentID ms_tcpip6' -verb RunAs");
-                                }
-                                String[] allArgs = new String[args.size()];
-                                allArgs = args.toArray(allArgs);
-                                ExecuteCommand ec = new ExecuteCommand(allArgs);
-                                ec.run();
-                                CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-                                Message response = new Message("TCPAck", getThisPeer(), cr, message.getSender().getId());
-                                send(response);
-                            }
-                        }
+                        else if(message.getOperation().equals("TCP"))
+                            Command.executeTCP(message);
                     }
                 }
             }
@@ -177,30 +156,6 @@ public class Multicast {
             connectionSocket.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    public void executeCommand(Message message) throws Exception {
-        String os = System.getProperty("os.name");
-        ArrayList<String> body = null;
-        if(message.getBody() instanceof  ArrayList<?>)
-            body = ((ArrayList<String>) message.getBody());
-        String firstArg = body.get(0);
-        ExecuteCommand ec = null;
-        if ((firstArg.contains("windows") && os.contains("Windows"))
-                || (firstArg.contains("linux") && os.contains("Linux"))) {
-            String[] cmdTemp = body.get(1).split(" ");
-            ec = new ExecuteCommand(cmdTemp);
-        } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
-            String[] cmdTemp = body.get(0).split(" ");
-            ec = new ExecuteCommand(cmdTemp);
-        }
-        if (ec != null) {
-            ec.setStoreOutput(true);
-            ec.run();
-            CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-            Message response = new Message("SendCommandAck", getThisPeer(), cr, message.getSender().getId());
-            send(response);
         }
     }
 
