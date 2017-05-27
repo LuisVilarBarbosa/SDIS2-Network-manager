@@ -126,13 +126,13 @@ public class Multicast {
                             TransmitFile.receiveFile(message, this);
                         else if (message.getOperation().equals(TransmitFile.ResendFile))
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
-                        else if (message.getOperation().equals("SendCommand"))
+                        else if (message.getOperation().equals(Command.SEND_COMMAND))
                             Command.executeCommand(this, message);
-                        else if(message.getOperation().equals("SendCommandAck") || message.getOperation().equals("TCPAck"))
+                        else if(message.getOperation().equals(Command.SEND_COMMAND_ACK) || message.getOperation().equals(Command.TCP_ACK))
                             ((CommandResponse)message.getBody()).print();
-                        else if(message.getOperation().equals("TCP"))
+                        else if(message.getOperation().equals(Command.TCP))
                             Command.executeTCP(this, message);
-                        else if(message.getOperation().equals("PORT"))
+                        else if(message.getOperation().equals(Command.PORT))
                             Command.executePort(this, message);
                     }
                 }

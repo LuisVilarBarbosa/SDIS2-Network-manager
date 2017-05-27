@@ -4,13 +4,23 @@ import communication.Message;
 import communication.Multicast;
 import files.TransmitFile;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Command implements Serializable {
+    public static final String SEND_FILE = "SEND_FILE";
+    public static final String SEND_COMMAND = "SEND_COMMAND";
+    public static final String SEND_COMMAND_ACK = "SEND_COMMAND_ACK";
+    public static final String PORT = "PORT";
+    public static final String PORT_ACK = "PORT_ACK";
+    public static final String TCP = "TCP";
+    public static final String TCP_ACK = "TCP_ACK";
+    public static final String HTTP = "HTTP";
+    public static final String FTP = "FTP";
+    private static final String EXIT = "EXIT";
+    private static final String powershell = "powershell.exe";
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
     private Multicast multicast;
@@ -41,60 +51,58 @@ public class Command implements Serializable {
     }
 
     public boolean execute() {
-        if(command.equals("SEND_FILE")) {
+        if(command.equals(SEND_FILE)) {
             try {
                 TransmitFile.sendFile(multicast, args.get(0), getPeers(1));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        else if(command.equals("SEND_COMMAND")) {
+        else if(command.equals(SEND_COMMAND)) {
             BigDecimal[] peers = {};
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
                 if(args.size() > 2)
                     peers = getPeers(2);
             }
-            else {
-                if(args.size() > 1)
+            else if(args.size() > 1)
                     peers = getPeers(1);
-            }
 
-            Message msg = new Message("SendCommand", multicast.getThisPeer(), args, peers);
+            Message msg = new Message(SEND_COMMAND, multicast.getThisPeer(), args, peers);
             multicast.send(msg);
         }
-        else if(command.equals("PORT")) {
+        else if(command.equals(PORT)) {
             String option = args.get(0);
             String port = args.get(1);
             String[] args = {option, port};
             BigDecimal[] peers = getPeers(2);
 
-            Message msg = new Message("PORT", multicast.getThisPeer(), args, peers);
+            Message msg = new Message(PORT, multicast.getThisPeer(), args, peers);
             multicast.send(msg);
         }
-        else if(command.equals("TCP")) {
+        else if(command.equals(TCP)) {
             String option = args.get(0);
             BigDecimal[] peers = getPeers(1);
 
-            Message msg = new Message("TCP", multicast.getThisPeer(), option, peers);
+            Message msg = new Message(TCP, multicast.getThisPeer(), option, peers);
             multicast.send(msg);
         }
-        else if(command.equals("HTTP")) {
-            String option = args.get(0);
-
-            BigDecimal[] peers = getPeers(1);
-
-            Message msg = new Message("HTTP", multicast.getThisPeer(), this, peers);
-            multicast.send(msg);
-        }
-        else if(command.equals("FTP")) {
+        else if(command.equals(HTTP)) {
             String option = args.get(0);
 
             BigDecimal[] peers = getPeers(1);
 
-            Message msg = new Message("FTP", multicast.getThisPeer(), this, peers);
+            Message msg = new Message(HTTP, multicast.getThisPeer(), this, peers);
             multicast.send(msg);
         }
-        else if(command.equals("EXIT"))
+        else if(command.equals(FTP)) {
+            String option = args.get(0);
+
+            BigDecimal[] peers = getPeers(1);
+
+            Message msg = new Message(FTP, multicast.getThisPeer(), this, peers);
+            multicast.send(msg);
+        }
+        else if(command.equals(EXIT))
             return false;
         return true;
     }
@@ -103,7 +111,7 @@ public class Command implements Serializable {
         String option = (String)message.getBody();
         ArrayList<String> args = new ArrayList<>();
         if(System.getProperty("os.name").contains("Windows")) {
-            args.add("powershell.exe");
+            args.add(powershell);
             if (option.contains("disable")) {
                 args.add("start-process powershell -ArgumentList '-noprofile Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
             }
@@ -114,7 +122,7 @@ public class Command implements Serializable {
             ExecuteCommand ec = new ExecuteCommand(allArgs);
             ec.run();
             CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-            Message response = new Message("TCPAck", mc.getThisPeer(), cr, message.getSender().getId());
+            Message response = new Message(TCP_ACK, mc.getThisPeer(), cr, message.getSender().getId());
             mc.send(response);
         }
     }
@@ -138,7 +146,7 @@ public class Command implements Serializable {
             ec.setStoreOutput(true);
             ec.run();
             CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-            Message response = new Message("SendCommandAck", mc.getThisPeer(), cr, message.getSender().getId());
+            Message response = new Message(SEND_COMMAND_ACK, mc.getThisPeer(), cr, message.getSender().getId());
             mc.send(response);
         }
     }
@@ -151,7 +159,7 @@ public class Command implements Serializable {
         ArrayList<String> args = new ArrayList<>();
         if(os.contains("Windows"))
         {
-            args.add("powershell.exe");
+            args.add(powershell);
             if(option.contains("disable")){
                 args.add("New-NetFirewallRule -DisplayName \"Disabling Port "+ port + "\" -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port + " -Verb RunAs");
             }
@@ -165,7 +173,7 @@ public class Command implements Serializable {
         ExecuteCommand ec = new ExecuteCommand(allArgs);
         ec.run();
         CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-        Message response = new Message("PORTAck", multicast.getThisPeer(), cr, message.getSender().getId());
+        Message response = new Message(PORT_ACK, multicast.getThisPeer(), cr, message.getSender().getId());
         multicast.send(response);
     }
 }
