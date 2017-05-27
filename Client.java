@@ -25,8 +25,14 @@ public class Client {
 					Database db = new Database("database.db");
 					if(db.open() != null) {
 						try {
-							db.updateUser(username, true);
-							//db.insertUser(username);
+							/*db.insertUser(username);
+							db.insertFile("/home/file1.php", new Date(System.currentTimeMillis()), username);
+							db.insertFile("/home/file2.php", new Date(System.currentTimeMillis()), username);*/
+							ResultSet rs = db.searchFiles(username);
+							while(!rs.isAfterLast()) {
+								System.out.println(rs.getString("path"));
+								rs.next();
+							}
 						} catch (SQLException e) {
 							//TODO User already exists. Should we print something?
 							e.printStackTrace();
