@@ -34,7 +34,7 @@ public class Multicast {
     //If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
     public Multicast(int thisHostPort, String publicHostName, int publicHostPort) {
         this.thisHostPort = thisHostPort;
-        this.root = new Node(BigDecimal.ONE, "localhost", 1500);    // fictitious root
+        this.root = new Node(BigDecimal.ONE, "fictitious", 1500);    // fictitious root
         this.parent = this.root;
         this.thisPeer = new Node(new BigDecimal(2), publicHostName, publicHostPort);
         this.parent.addChild(this.thisPeer);
@@ -56,19 +56,15 @@ public class Multicast {
     }
 
     public void showConnectedPeers() {
-        HashMap<BigDecimal, Node> connectedPeers = getConnectedPeers(root);
         StringBuilder stringBuilder = new StringBuilder();
-        for (Node n : connectedPeers.values())
-            stringBuilder.append(n.getId()).append("\t").append(n.getHostName()).append("\t").append(n.getPort()).append("\n");
+        getConnectedPeers(root, stringBuilder, "");
         System.out.println(stringBuilder);
     }
 
-    private HashMap<BigDecimal, Node> getConnectedPeers(Node root) {
-        HashMap<BigDecimal, Node> connectedPeers = new HashMap<>();
-        connectedPeers.put(root.getId(), root);
+    private void getConnectedPeers(Node root, StringBuilder stringBuilder, String indentation) {
+        stringBuilder.append(indentation).append(root.getId()).append("\t").append(root.getHostName()).append("\t").append(root.getPort()).append("\n");
         for (Node child : root.getChildren())
-            connectedPeers.putAll(getConnectedPeers(child));
-        return connectedPeers;
+                getConnectedPeers(child, stringBuilder, indentation + " ");
     }
 
     private void generateDispatcherThread() {
