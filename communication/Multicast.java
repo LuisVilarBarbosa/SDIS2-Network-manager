@@ -34,7 +34,7 @@ public class Multicast {
     //If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
     public Multicast(int thisHostPort, String publicHostName, int publicHostPort) {
         this.thisHostPort = thisHostPort;
-        this.root = new Node(BigDecimal.ONE, "fictitious", 1500);    // fictitious root
+        this.root = new Node(BigDecimal.ONE, "localhost", 1500);    // fictitious root
         this.parent = this.root;
         this.thisPeer = new Node(new BigDecimal(2), publicHostName, publicHostPort);
         this.parent.addChild(this.thisPeer);
