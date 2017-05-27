@@ -1,20 +1,17 @@
 package login;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class CredentialAsker {
 	
-	public CredentialAsker() {
-		
-	}
-	
 	public static String requestUsername() {
 		System.out.print("Username: ");
 		
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		String username = "";
-		
+
 		try {
 			username = input.readLine();
 		} catch (IOException e) {

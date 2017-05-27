@@ -68,7 +68,7 @@ public class Database {
 	
 	public Database(String dbPath) throws IOException, ClassNotFoundException, SQLException {
 		this.dbPath = dbPath;
-		File f = new File("./" + this.dbPath);
+		File f = new File(this.dbPath);
 		if(!f.exists()) {
 			System.out.println("Database not found. Creating a new one...");
 			f.createNewFile();

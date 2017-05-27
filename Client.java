@@ -21,21 +21,14 @@ public class Client {
 				System.out.println("Login successful");
 				try {
 					db = new Database("database.db");
-					if(db.open() != null) {
-						return true;
-
-					} else {
-						return false;
-					}
+					return db.open() != null;
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 					return false;
 				} catch (IOException e) {
-					e.printStackTrace();
 					System.out.println("Error: Could not create database");
 					return false;
 				} catch (SQLException e1) {
-					e1.printStackTrace();
 					System.out.println("Error: Database may not be open");
 					return false;
 				}
@@ -54,7 +47,6 @@ public class Client {
 		try {
 			db.close();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
