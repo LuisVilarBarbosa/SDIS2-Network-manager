@@ -2,7 +2,6 @@ package communication;
 
 import commands.Command;
 import commands.CommandResponse;
-import commands.ExecuteCommand;
 import files.FileData;
 import files.TransmitFile;
 
@@ -21,8 +20,6 @@ public class Multicast {
     private static final String NewChildAccepted = "NewChildAccepted";
     private static final String NewChildAcceptedAck = "NewChildAcceptedAck";
     private static final String NewChildAdded = "NewChildAdded";
-    private static final String PingParentRequest = "PingParentRequest";
-    private static final String PingParentConfirmation = "PingParentConfirmation";
     private static final String ChangeParentRequest = "ChangeParentRequest";
     private static final String ChangeParentConfirmation = "ChangeParentConfirmation";
     private static final String ChangeParentConfirmationAck = "ChangeParentConfirmationAck";
@@ -40,7 +37,6 @@ public class Multicast {
         this.thisPeer = new Node(BigDecimal.ONE, publicHostName, publicHostPort);
         this.root = this.thisPeer;
         generateDispatcherThread();
-        generatePingParentThread();
     }
 
     //If the peer is joining a group, 'publicHostName' and 'publicHostPort' must be the reachable address of an already online peer.
@@ -51,7 +47,6 @@ public class Multicast {
         this.root = null;
         newChild(publicHostName, publicHostPort, anotherHostName, anotherHostPort);
         generateDispatcherThread();
-        generatePingParentThread();
     }
 
     public Node getThisPeer() {
@@ -72,17 +67,6 @@ public class Multicast {
         for (Node child : root.getChildren())
             connectedPeers.putAll(getConnectedPeers(child));
         return connectedPeers;
-    }
-
-    private void generatePingParentThread() {
-        Timer timerReq = new Timer();
-        TimerTask t = new TimerTask() {
-            @Override
-            public void run() {
-                pingParentRequest();
-            }
-        };
-        timerReq.schedule(t, 0);
     }
 
     private void generateDispatcherThread() {
@@ -124,9 +108,7 @@ public class Multicast {
             if (Message.class.isInstance(message)) {
                 String operation = message.getOperation();
 
-                if (message.getOperation().equals(PingParentRequest))
-                    pingParentConfirmation(connectionSocket, message);
-                else if (message.getOperation().equals(ChangeParentRequest))
+                if (message.getOperation().equals(ChangeParentRequest))
                     changeParentConfirmation(connectionSocket, message);
                 else if (operation.equals(NewChildRequest))
                     newChildRequest(connectionSocket, message);
@@ -165,17 +147,24 @@ public class Multicast {
     private void propagateMessage(Message message) {
         Node lastSender = message.getLastSender();
         message.setLastSender(thisPeer);
-        try {
-            for (Node n : thisPeer.getChildren()) {
-                if (!lastSender.equals(n) && thisPeer.isDescendant(root.getNode(n.getId())))
+
+        for (Node n : thisPeer.getChildren()) {
+            if (!lastSender.equals(n) && thisPeer.isDescendant(root.getNode(n.getId()))) {
+                try {
                     send(n.getHostName(), n.getPort(), message);
+                } catch (Exception e) {
+                    //removeNode(n);
+                }
             }
-            if (parent != null) {
-                if (!lastSender.equals(parent))
+        }
+        if (parent != null) {
+            if (!lastSender.equals(parent)) {
+                try {
                     send(parent.getHostName(), parent.getPort(), message);
+                } catch (Exception e) {
+                    //removeNode(parent);
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -237,32 +226,6 @@ public class Multicast {
         Node child = (Node) message.getBody();
         if (!parent.getChildren().contains(child))
             parent.addChild(child);
-    }
-
-    private void pingParentRequest() {
-        while (true) {
-            try {
-                if (parent != null) {
-                    Socket socket = SSL.generateSSLSocket(parent.getHostName(), parent.getPort());
-                    send(socket, new Message(PingParentRequest, thisPeer, parent.getId()));
-                    Message answer = receive(socket);
-                    socket.close();
-                    if (!answer.getOperation().equals(PingParentConfirmation))
-                        throw new Exception("Problem receiving the confirmation that the parent is alive.");
-                }
-                Thread.sleep(TCP.timeout);
-            } catch (Exception e) {
-                try {
-                    changeParentRequest();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private void pingParentConfirmation(Socket socket, Message message) throws Exception {
-        send(socket, new Message(PingParentConfirmation, thisPeer, message.getSender().getId()));
     }
 
     private synchronized void changeParentRequest() throws Exception {
