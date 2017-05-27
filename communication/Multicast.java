@@ -34,9 +34,10 @@ public class Multicast {
     //If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
     public Multicast(int thisHostPort, String publicHostName, int publicHostPort) {
         this.thisHostPort = thisHostPort;
-        this.parent = null;
-        this.thisPeer = new Node(BigDecimal.ONE, publicHostName, publicHostPort);
-        this.root = this.thisPeer;
+        this.root = new Node(BigDecimal.ONE, "localhost", 1500);    // fictitious root
+        this.parent = this.root;
+        this.thisPeer = new Node(new BigDecimal(2), publicHostName, publicHostPort);
+        this.parent.addChild(this.thisPeer);
         generateDispatcherThread();
     }
 
@@ -152,7 +153,7 @@ public class Multicast {
         message.setLastSender(thisPeer);
 
         for (Node n : thisPeer.getChildren()) {
-            if (!lastSender.equals(n) && thisPeer.isDescendant(root.getNode(n.getId()))) {
+            if (!lastSender.equals(n)) {
                 try {
                     send(n.getHostName(), n.getPort(), message);
                 } catch (Exception e) {
@@ -160,7 +161,7 @@ public class Multicast {
                 }
             }
         }
-        if (parent != null) {
+        if (parent != null && !parent.equals(root)) {
             if (!lastSender.equals(parent)) {
                 try {
                     send(parent.getHostName(), parent.getPort(), message);
@@ -235,8 +236,8 @@ public class Multicast {
 
     private synchronized void changeParentRequest() {
         if (!changeParentRequestAux(root)) {
-            parent = null;
-            root = thisPeer;
+            parent = this.root;
+            send(new Message(ChangeNodeParent, root, thisPeer));    // simulating that root is informing that added a new child
             if(thisPeer.getChildren().isEmpty())
                 System.err.println("Unable to send a change parent request to a new parent that is not my descendant. I am the only one connected.");
         }
@@ -249,10 +250,7 @@ public class Multicast {
             send(socket, new Message(ChangeParentRequest, thisPeer, root.getId()));
             Message answer = receive(socket);
             if (answer.getOperation().equals(ChangeParentConfirmation)) {
-                boolean parentIsRoot = this.parent.equals(this.root);
                 this.parent = root.getNode(answer.getSender().getId());
-                if (parentIsRoot)
-                    this.root = this.parent;
                 send(socket, new Message(ChangeParentConfirmationAck, thisPeer, this.parent.getId()));
                 parentChanged = true;
             }
@@ -290,16 +288,20 @@ public class Multicast {
     }
 
     private void removeNode(Message message) {
-        removeNode((Node)message.getBody());
+        removeNodeAux((Node)message.getBody());
     }
 
     private void removeNode(Node node) {
+        removeNodeAux(node);
+        send(new Message(RemoveNode, thisPeer, node));
+    }
+
+    private void removeNodeAux(Node node) {
         if(parent != null && parent.equals(node)) {
             parent = null;
             changeParentRequest();
         }
         else
             root.removeDescendant(node);
-        send(new Message(RemoveNode, thisPeer, node));
     }
 }
