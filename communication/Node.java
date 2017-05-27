@@ -39,8 +39,12 @@ public class Node implements Serializable {
         children.add(n);
     }
 
-    public void removeChild(Node node) {
-        children.remove(node);
+    public void removeDescendant(Node node) {
+        if(!children.remove(node)) {
+            for (Node n : children) {
+                n.removeDescendant(node);
+            }
+        }
     }
 
     public Node getParent(Node node) {

@@ -24,6 +24,7 @@ public class Multicast {
     private static final String ChangeParentConfirmation = "ChangeParentConfirmation";
     private static final String ChangeParentConfirmationAck = "ChangeParentConfirmationAck";
     private static final String ChangeNodeParent = "ChangeNodeParent";
+    private static final String RemoveNode = "RemoveNode";
 
     private int thisHostPort;
     private Node root;
@@ -121,6 +122,8 @@ public class Multicast {
                             changeNodeParent(message);
                         else if (message.getOperation().equals(NewChildAdded))
                             newChildAdded(message);
+                        else if (message.getOperation().equals(RemoveNode))
+                            removeNode(message);
                         else if (message.getOperation().equals("SendFile"))
                             TransmitFile.receiveFile(message, this);
                         else if (message.getOperation().equals("ResendFile"))
@@ -153,7 +156,7 @@ public class Multicast {
                 try {
                     send(n.getHostName(), n.getPort(), message);
                 } catch (Exception e) {
-                    //removeNode(n);
+                    removeNode(n);
                 }
             }
         }
@@ -162,7 +165,7 @@ public class Multicast {
                 try {
                     send(parent.getHostName(), parent.getPort(), message);
                 } catch (Exception e) {
-                    //removeNode(parent);
+                    removeNode(parent);
                 }
             }
         }
@@ -234,7 +237,8 @@ public class Multicast {
         if (!changeParentRequestAux(root)) {
             parent = null;
             root = thisPeer;
-            System.err.println("Unable to send a change parent request to a new parent that is not my descendant.");
+            if(thisPeer.getChildren().isEmpty())
+                System.err.println("Unable to send a change parent request to a new parent that is not my descendant. I am the only one connected.");
         }
     }
 
@@ -266,6 +270,8 @@ public class Multicast {
     private synchronized void changeParentConfirmation(Socket socket, Message message) throws Exception {
         // It is automatically authorized to change because during the time where problems can occur this function is not initiated.
         Node newChild = root.getNode(message.getSender().getId());
+        root.removeDescendant(newChild);
+        thisPeer.addChild(newChild);
         send(socket, new Message(ChangeParentConfirmation, thisPeer, newChild.getId()));
         send(new Message(ChangeNodeParent, thisPeer, newChild));
         Message answer = receive(socket);
@@ -278,9 +284,22 @@ public class Multicast {
         BigDecimal parentNodeId = message.getSender().getId();
         BigDecimal childNodeId = ((Node) message.getBody()).getId();
         Node childNode = root.getNode(childNodeId);
-        Node oldParentNode = root.getParent(childNode);
-        oldParentNode.removeChild(childNode);
+        root.removeDescendant(childNode);
         Node newParent = root.getNode(parentNodeId);
         newParent.addChild(childNode);
+    }
+
+    private void removeNode(Message message) {
+        removeNode((Node)message.getBody());
+    }
+
+    private void removeNode(Node node) {
+        if(parent != null && parent.equals(node)) {
+            parent = null;
+            changeParentRequest();
+        }
+        else
+            root.removeDescendant(node);
+        send(new Message(RemoveNode, thisPeer, node));
     }
 }
