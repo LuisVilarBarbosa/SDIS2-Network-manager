@@ -168,9 +168,11 @@ public class Multicast {
         }
     }
 
-    public void send(Message message) throws Exception {
-        if (thisPeer == null)
-            throw new Exception("The multicast connection is not already established.");
+    public void send(Message message) {
+        if (thisPeer == null) {
+            System.err.println("The multicast connection is not already established.");
+            return;
+        }
         propagateMessage(message);
     }
 
@@ -180,7 +182,7 @@ public class Multicast {
         socket.close();
     }
 
-    private void send(Socket socket, Message message) throws Exception {
+    private void send(Socket socket, Message message) throws IOException {
         TCP.send(socket, message);
         //System.out.println("< " + message);
     }
@@ -228,12 +230,15 @@ public class Multicast {
             parent.addChild(child);
     }
 
-    private synchronized void changeParentRequest() throws Exception {
-        if (!changeParentRequestAux(root, thisPeer))
-            throw new Exception("Unable to send a change parent request to a new parent.");
+    private synchronized void changeParentRequest() {
+        if (!changeParentRequestAux(root)) {
+            parent = null;
+            root = thisPeer;
+            System.err.println("Unable to send a change parent request to a new parent that is not my descendant.");
+        }
     }
 
-    private boolean changeParentRequestAux(Node root, Node thisPeer) {
+    private boolean changeParentRequestAux(Node root) {
         boolean parentChanged = false;
         try {
             Socket socket = SSL.generateSSLSocket(root.getHostName(), root.getPort());
@@ -251,7 +256,7 @@ public class Multicast {
         } catch (Exception e) {
             for (Node child : root.getChildren()) {
                 if (!thisPeer.equals(child) && !thisPeer.isDescendant(child))
-                    if (parentChanged = changeParentRequestAux(child, thisPeer))
+                    if (parentChanged = changeParentRequestAux(child))
                         break;
             }
         }

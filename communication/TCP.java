@@ -9,7 +9,7 @@ import java.net.Socket;
 class TCP {
     public static final int timeout = 3000;
 
-    public static void send(Socket socket, Object object) throws Exception {
+    public static void send(Socket socket, Object object) throws IOException {
         socket.setSoTimeout(timeout);
         OutputStream outputStream = socket.getOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
