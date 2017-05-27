@@ -25,9 +25,7 @@ public class Client {
 					Database db = new Database("database.db");
 					if(db.open() != null) {
 						try {
-							/*db.insertUser(username);
-							db.insertFile("/home/file1.php", new Date(System.currentTimeMillis()), username);
-							db.insertFile("/home/file2.php", new Date(System.currentTimeMillis()), username);*/
+							db.deleteUser(username);
 							ResultSet rs = db.searchFiles(username);
 							while(!rs.isAfterLast()) {
 								System.out.println(rs.getString("path"));
