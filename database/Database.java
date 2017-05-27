@@ -65,10 +65,16 @@ public class Database {
 	
 	private final String dbPath;
 	private Connection dbConnection;
+	public static final String superuser = "up201404293";
 	
 	public Database(String dbPath) throws IOException, ClassNotFoundException, SQLException {
-		this.dbPath = dbPath;
-		File f = new File("./" + this.dbPath);
+		File dir = new File(dbPath);
+		if(!dir.exists()) {
+			dir.mkdir();
+			System.out.println("Database folder not found. Creating a new folder...");
+		}
+		this.dbPath = dbPath + "/database.db";
+		File f = new File(this.dbPath);
 		if(!f.exists()) {
 			System.out.println("Database not found. Creating a new one...");
 			f.createNewFile();
@@ -82,6 +88,7 @@ public class Database {
 		stmt.execute();
 		stmt = this.dbConnection.prepareStatement(createFileTableSQL);
 		stmt.execute();
+		insertUser(superuser, true);
 	}
 	
 	public Connection open() throws ClassNotFoundException, SQLException {
@@ -102,10 +109,12 @@ public class Database {
 	}
 	
 	public boolean insertUser(String username, boolean isAdmin) throws SQLException {
-		if(searchUser(username).isAfterLast()) {
+		ResultSet rs = searchUser(username);
+		if(rs.isAfterLast()) {
 			PreparedStatement stmt = this.dbConnection.prepareStatement(insertUserSQL);
 			stmt.setString(1, username);
 			stmt.setBoolean(2, isAdmin);
+			System.out.println("Inserted");
 			return stmt.execute();
 		}
 		//In case user already exists

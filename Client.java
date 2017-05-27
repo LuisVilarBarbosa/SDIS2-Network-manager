@@ -11,8 +11,9 @@ import login.Registrator;
 
 public class Client {
 	public static Database db;
+	public static boolean admin;
 	
-	public static boolean start() {
+	public static boolean start(String dbFolderPath) {
 		String username = CredentialAsker.requestUsername();
 		String password = CredentialAsker.requestPassword();
 		try {
@@ -20,8 +21,9 @@ public class Client {
 			if(registrator.register(username, password)) {
 				System.out.println("Login successful");
 				try {
-					db = new Database("database.db");
+					db = new Database("database/" + dbFolderPath);
 					if(db.open() != null) {
+						//admin = db.searchUser(username).getBoolean("idAdmin");
 						return true;
 
 					} else {

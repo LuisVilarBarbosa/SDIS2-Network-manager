@@ -14,7 +14,7 @@ public class NetworkManager {
             System.out.println("NetworkManager new_group <local host port> <public host name> <public host port>");
             System.out.println("NetworkManager join_group <local host port> <public host name> <public host port> <another host name> <another host port>");
             return;
-        } else if(Client.start()){
+        } else {
             String mode = args[0];
             int localHostPort = Integer.parseInt(args[1]);
             String publicHostName = args[2];
@@ -39,10 +39,12 @@ public class NetworkManager {
                     return;
                 }
             }
+            
+            if(!Client.start(publicHostName + "_" + Integer.toString(publicHostPort))) {
+            	System.out.println("Could not open database");
+            	return;
+            }
 
-        } else {
-        	System.out.println("Could not open database");
-        	return;
         }
 
         NetworkManager n = new NetworkManager();
