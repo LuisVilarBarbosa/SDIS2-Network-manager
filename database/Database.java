@@ -9,6 +9,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Todas as operações que retornarem ResultSets, já devolvem esse set a apontar para o 1º elemento.
+ * Caso não seja encontrado nenhum resultado, tentar aceder ao ResultSet pode dar problemas e lançar
+ * excepções. Há duas maneiras de lidar com isso: <p />
+ *  <ol>
+ *  <li> Verificar se o cursor dentro do ResultSet já passou o último elemento -> <strong>ResultSet.isAfterLast()</strong>
+ *  <li> Fazer <strong>catch</strong> duma SQLException quando se tenta aceder a um elemento do ResultSet
+ *  (que pode ser inexistente, daí lançar a excepção)
+ *  </ol>
+ * 
+ * @author ZeCarlosCoutinho
+ *
+ */
 public class Database {
 	private static final String createUserTableSQL =	
 			"CREATE TABLE users ("
@@ -46,6 +59,9 @@ public class Database {
 	private static final String selectFileOfUserSQL =
 			"SELECT * FROM files "
 			+ "WHERE path LIKE ? AND user_id = ?";
+	private static final String selectUserFilesSQL =
+			"SELECT * FROM files "
+			+ "WHERE user_id = ?;";
 	
 	private final String dbPath;
 	private Connection dbConnection;
@@ -97,6 +113,14 @@ public class Database {
 	}
 	
 	public boolean deleteUser(String username) throws SQLException {
+		//Deletes user files
+		ResultSet userFiles = searchFiles(username);
+		while(!userFiles.isAfterLast()) {
+			deleteFile(userFiles.getString("path"), username);
+			userFiles.next();
+		}
+		userFiles.close();
+		
 		PreparedStatement stmt = this.dbConnection.prepareStatement(deleteUserSQL);
 		stmt.setString(1, username);
 		return stmt.execute();
@@ -124,7 +148,14 @@ public class Database {
 	
 	public boolean insertFile(String path, Date date, String username) throws SQLException {
 		ResultSet rs = searchUser(username);
-		int user_id = rs.getInt("id");
+		int user_id;
+		try {
+			user_id = rs.getInt("id");
+		} catch (SQLException e) {
+			//No user found
+			return false;
+		}
+		rs.close();
 		
 		PreparedStatement stmt = this.dbConnection.prepareStatement(insertFileSQL);
 		stmt.setString(1, path);
@@ -135,7 +166,14 @@ public class Database {
 	
 	public boolean deleteFile(String path, String username) throws SQLException {
 		ResultSet rs = searchUser(username);
-		int user_id = rs.getInt("id");
+		int user_id;
+		try {
+			user_id = rs.getInt("id");
+		} catch (SQLException e) {
+			//No user found
+			return false;
+		}
+		rs.close();
 		
 		PreparedStatement stmt = this.dbConnection.prepareStatement(deleteFileSQL);
 		stmt.setString(1, path);
@@ -159,11 +197,33 @@ public class Database {
 	}
 	
 	public ResultSet searchFile(String path, String username) throws SQLException {
-		int user_id = searchUser(username).getInt("id");
+		ResultSet rs = searchUser(username);
+		int user_id;
+		try {
+			user_id = rs.getInt("id");
+		} catch(SQLException e) {
+			//No user found
+			return rs;
+		}
 		PreparedStatement stmt = this.dbConnection.prepareStatement(selectFileOfUserSQL);
 		stmt.setString(1, path);
 		stmt.setInt(2, user_id);
-		ResultSet rs = stmt.executeQuery();
+		rs = stmt.executeQuery();
+		rs.next();
+		return rs;
+	}
+	
+	public ResultSet searchFiles(String username) throws SQLException {
+		ResultSet rs = searchUser(username);
+		int user_id;
+		try {
+			user_id = rs.getInt("id");
+		} catch(SQLException e) {
+			//No user found
+			return rs;		}
+		PreparedStatement stmt = this.dbConnection.prepareStatement(selectUserFilesSQL);
+		stmt.setInt(1, user_id);
+		rs = stmt.executeQuery();
 		rs.next();
 		return rs;
 	}

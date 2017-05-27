@@ -23,6 +23,7 @@ public class Client {
 					db = new Database("database.db");
 					if(db.open() != null) {
 						return true;
+
 					} else {
 						return false;
 					}
