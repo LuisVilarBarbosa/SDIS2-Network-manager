@@ -61,11 +61,9 @@ public class NetworkManager {
             if(readCommand.toLowerCase().contains("list")){
                 System.out.println("AVAILABLE COMMANDS:");
                 System.out.println("   SEND_FILE <file path> [<peer_id>...]\n" +
-                        "   GET_FILE <file_path> <peer_id>\n" +
                         "   SEND_COMMAND [-windows|-linux] <command> [<peer_id>...]\n" +
                         "   PORT <-enable|-disable> <port number> [<peer_id>...]\n" +
                         "   TCP <-enable|-disable> [<peer_id>...]\n" +
-                        "   UDP <-enable|-disable> [<peer_id>...]\n" +
                         "   HTTP <-enable|-disable> [<peer_id>...]\n" +
                         "   FTP <-enable|-disable> [<peer_id>...]\n" +
                         "   EXIT\n");

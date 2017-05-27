@@ -4,6 +4,7 @@ import communication.Message;
 import communication.Multicast;
 import files.TransmitFile;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -47,12 +48,6 @@ public class Command implements Serializable {
                 e.printStackTrace();
             }
         }
-        else if(command.equals("GET_FILE")) {
-            String filepath = args.get(0);
-            BigDecimal peerId = getPeers(1)[0];
-
-            // Do something
-        }
         else if(command.equals("SEND_COMMAND")) {
             BigDecimal[] peers = {};
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
@@ -69,26 +64,18 @@ public class Command implements Serializable {
         }
         else if(command.equals("PORT")) {
             String option = args.get(0);
-            int port = Integer.parseInt(args.get(1));
+            String port = args.get(1);
+            String[] args = {option, port};
             BigDecimal[] peers = getPeers(2);
 
-            Message msg = new Message("PORT", multicast.getThisPeer(), this, peers);
+            Message msg = new Message("PORT", multicast.getThisPeer(), args, peers);
             multicast.send(msg);
         }
         else if(command.equals("TCP")) {
             String option = args.get(0);
-
             BigDecimal[] peers = getPeers(1);
 
             Message msg = new Message("TCP", multicast.getThisPeer(), option, peers);
-            multicast.send(msg);
-        }
-        else if(command.equals("UDP")) {
-            String option = args.get(0);
-
-            BigDecimal[] peers = getPeers(1);
-
-            Message msg = new Message("UDP", multicast.getThisPeer(), this, peers);
             multicast.send(msg);
         }
         else if(command.equals("HTTP")) {
@@ -156,4 +143,29 @@ public class Command implements Serializable {
         }
     }
 
+    public static void executePort(Multicast multicast, Message message) throws Exception {
+        String os = System.getProperty("os.name");
+        String[] info = (String[])message.getBody();
+        String option = info[0];
+        String port = info[1];
+        ArrayList<String> args = new ArrayList<>();
+        if(os.contains("Windows"))
+        {
+            args.add("powershell.exe");
+            if(option.contains("disable")){
+                args.add("New-NetFirewallRule -DisplayName \"Disabling Port "+ port + "\" -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port + " -Verb RunAs");
+            }
+            else if(option.contains("enable")){
+                args.add("New-NetFirewallRule -DisplayName \"Enabling Port "+ port + "\" -Action Allow -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port + " -Verb RunAs");
+
+            }
+        }
+        String[] allArgs = new String[args.size()];
+        allArgs = args.toArray(allArgs);
+        ExecuteCommand ec = new ExecuteCommand(allArgs);
+        ec.run();
+        CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
+        Message response = new Message("PORTAck", multicast.getThisPeer(), cr, message.getSender().getId());
+        multicast.send(response);
+    }
 }

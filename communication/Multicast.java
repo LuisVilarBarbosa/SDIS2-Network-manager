@@ -149,6 +149,8 @@ public class Multicast {
                             ((CommandResponse)message.getBody()).print();
                         else if(message.getOperation().equals("TCP"))
                             Command.executeTCP(this, message);
+                        else if(message.getOperation().equals("PORT"))
+                            Command.executePort(this, message);
                     }
                 }
             }
