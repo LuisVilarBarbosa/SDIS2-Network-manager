@@ -80,7 +80,7 @@ public class Command implements Serializable {
 
             BigDecimal[] peers = getPeers(1);
 
-            Message msg = new Message("TCP", multicast.getThisPeer(), this, peers);
+            Message msg = new Message("TCP", multicast.getThisPeer(), option, peers);
             multicast.send(msg);
         }
         else if(command.equals("UDP")) {
@@ -111,4 +111,5 @@ public class Command implements Serializable {
             return false;
         return true;
     }
+
 }

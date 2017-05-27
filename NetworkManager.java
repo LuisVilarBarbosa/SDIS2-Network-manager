@@ -14,7 +14,7 @@ public class NetworkManager {
             System.out.println("NetworkManager new_group <local host port> <public host name> <public host port>");
             System.out.println("NetworkManager join_group <local host port> <public host name> <public host port> <another host name> <another host port>");
             return;
-        } else if(Client.start()){
+        } else if(!Client.start()){
             String mode = args[0];
             int localHostPort = Integer.parseInt(args[1]);
             String publicHostName = args[2];
@@ -47,7 +47,7 @@ public class NetworkManager {
 
         NetworkManager n = new NetworkManager();
 
-        n.startMenu();
+        //n.startMenu();
         n.receiveCommand(m);
     }
 
@@ -57,33 +57,46 @@ public class NetworkManager {
             Scanner s = new Scanner(System.in);
 
             String readCommand = s.nextLine();
-            String[] commandsTemp = readCommand.split("\"");
 
-            ArrayList<String> finalCommands = new ArrayList<>();
-            for(int i = 0; i < commandsTemp.length; i++)
-            {
-                if(i != 1) {
-                    String[] tmp = commandsTemp[i].split(" ");
-                    for(int j = 0; j < tmp.length; j++) {
-                        if(!tmp[j].equals(""))
-                            finalCommands.add(tmp[j]);
+            if(readCommand.toLowerCase().contains("list")){
+                System.out.println("AVAILABLE COMMANDS:");
+                System.out.println("   SEND_FILE <file path> [<peer_id>...]\n" +
+                        "   GET_FILE <file_path> <peer_id>\n" +
+                        "   SEND_COMMAND [-windows|-linux] <command> [<peer_id>...]\n" +
+                        "   PORT <-enable|-disable> <port number> [<peer_id>...]\n" +
+                        "   TCP <-enable|-disable> [<peer_id>...]\n" +
+                        "   UDP <-enable|-disable> [<peer_id>...]\n" +
+                        "   HTTP <-enable|-disable> [<peer_id>...]\n" +
+                        "   FTP <-enable|-disable> [<peer_id>...]\n" +
+                        "   EXIT\n");
+            }
+            else {
+                String[] commandsTemp = readCommand.split("\"");
+
+                ArrayList<String> finalCommands = new ArrayList<>();
+                for (int i = 0; i < commandsTemp.length; i++) {
+                    if (i != 1) {
+                        String[] tmp = commandsTemp[i].split(" ");
+                        for (int j = 0; j < tmp.length; j++) {
+                            if (!tmp[j].equals(""))
+                                finalCommands.add(tmp[j]);
+                        }
+                    } else {
+                        finalCommands.add(commandsTemp[i]);
                     }
                 }
-                else {
-                    finalCommands.add(commandsTemp[i]);
-                }
-            }
 
-            String[] finalCommandsArr = new String[finalCommands.size()];
-            finalCommandsArr = finalCommands.toArray(finalCommandsArr);
-            String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
-            Command c = new Command(m, finalCommands.get(0), args);
-            try {
-                if(!c.execute()) {
-                    break;
+                String[] finalCommandsArr = new String[finalCommands.size()];
+                finalCommandsArr = finalCommands.toArray(finalCommandsArr);
+                String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
+                Command c = new Command(m, finalCommands.get(0), args);
+                try {
+                    if (!c.execute()) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
