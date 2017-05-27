@@ -61,7 +61,7 @@ public class Multicast {
         System.out.println(stringBuilder);
     }
 
-    private void getConnectedPeers(Node root, StringBuilder stringBuilder, String indentation) {
+    private synchronized void getConnectedPeers(Node root, StringBuilder stringBuilder, String indentation) {
         stringBuilder.append(indentation).append(root.getId()).append("\t").append(root.getHostName()).append("\t").append(root.getPort()).append("\n");
         for (Node child : root.getChildren())
                 getConnectedPeers(child, stringBuilder, indentation + " ");
@@ -143,7 +143,7 @@ public class Multicast {
         }
     }
 
-    private void propagateMessage(Message message) {
+    private synchronized void propagateMessage(Message message) {
         Node lastSender = message.getLastSender();
         message.setLastSender(thisPeer);
         ArrayList<BigDecimal> receivers = message.getReceivers();
@@ -303,7 +303,7 @@ public class Multicast {
         send(new Message(RemoveNode, thisPeer, node));
     }
 
-    private void removeNodeAux(Node node) {
+    private synchronized void removeNodeAux(Node node) {
         if(parent != null && parent.equals(node)) {
             parent = null;
             changeParentRequest();
