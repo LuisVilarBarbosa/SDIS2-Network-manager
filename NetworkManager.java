@@ -49,9 +49,11 @@ public class NetworkManager {
                 System.out.println("Could not open database");
                 return;
             }
-            Message msg = new Message(Command.CHANGE_PERMISSIONS, m.getThisPeer(),
-                    new ChangePermissionsPacket(Client.user, Client.admin));
-            m.send(msg);
+            if(Client.loggedIn) {
+	            Message msg = new Message(Command.CHANGE_PERMISSIONS, m.getThisPeer(),
+	                    new ChangePermissionsPacket(Client.user, Client.admin));
+	            m.send(msg);
+            }
 
         }
 
