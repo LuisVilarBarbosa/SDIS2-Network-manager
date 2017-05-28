@@ -34,9 +34,9 @@ public class Multicast {
     //If the peer is creating a new group, 'publicHostName' and 'publicHostPort' must be the reachable address of the peer that is starting.
     public Multicast(int thisHostPort, String publicHostName, int publicHostPort) {
         this.thisHostPort = thisHostPort;
-        this.root = new Node(BigDecimal.ONE, "localhost", 1500);    // fictitious root
+        this.root = new Node(BigDecimal.ZERO, "localhost", 1500);    // fictitious root
         this.parent = this.root;
-        this.thisPeer = new Node(new BigDecimal(2), publicHostName, publicHostPort);
+        this.thisPeer = new Node(BigDecimal.ONE, publicHostName, publicHostPort);
         this.parent.addChild(this.thisPeer);
         generateDispatcherThread();
     }
@@ -63,7 +63,8 @@ public class Multicast {
     }
 
     private synchronized void getConnectedPeers(Node root, StringBuilder stringBuilder, String indentation) {
-        stringBuilder.append(indentation).append(root.getId()).append("\t").append(root.getHostName()).append("\t").append(root.getPort()).append("\n");
+        if(root != this.root)
+            stringBuilder.append(indentation).append(root.getId()).append("\t").append(root.getHostName()).append("\t").append(root.getPort()).append("\n");
         for (Node child : root.getChildren())
                 getConnectedPeers(child, stringBuilder, indentation + " ");
     }
@@ -227,7 +228,7 @@ public class Multicast {
     }
 
     private synchronized void newChild(String publicHostName, int publicHostPort, String anotherHostName, int anotherHostPort) throws Exception {
-        thisPeer = new Node(BigDecimal.ZERO, publicHostName, publicHostPort);  // 0 = id that is not used, except here
+        thisPeer = new Node(BigDecimal.ZERO, publicHostName, publicHostPort);  // 0 = id that is not used, except here and on the fictitious root
         Socket socket = SSL.generateSSLSocket(anotherHostName, anotherHostPort);
         Message message = new Message(NewChildRequest, thisPeer);
         send(socket, message);
