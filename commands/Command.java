@@ -163,15 +163,21 @@ public class Command implements Serializable {
     }
 
     public static void blockPort(Multicast multicast,String port, BigDecimal senderID) throws IOException, InterruptedException {
-        String disable = "New-NetFirewallRule -DisplayName \"Disabling Port "+ port + "\" -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
-        String[] args = {"powershell.exe", disable};
+        String disable = "New-NetFirewallRule -DisplayName \'Disabling Port Outbound"+ port + "\' -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
+        String disable2 = "New-NetFirewallRule -DisplayName \'Disabling Port Inbound"+ port + "\' -Action Block -Direction Inbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
+        String[] args = {"powershell.exe", "-command", disable};
+        executeAndSend(multicast, senderID, PORT_ACK, true, args);
+        args[2] = disable2;
         executeAndSend(multicast, senderID, PORT_ACK, true, args);
     }
 
     public static void allowPort(Multicast multicast,String port, BigDecimal senderID) throws IOException, InterruptedException {
-        String enable = "New-NetFirewallRule -DisplayName \"Enabling Port "+ port + "\" -Action Allow -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
-        String[] args = {"powershell.exe", enable};
-        executeAndSend(multicast, senderID, PORT_ACK, true, enable);
+        String enable = "Remove-NetFirewallRule -DisplayName \'Disabling Port Outbound"+ port + "\'";
+        String enable2 = "Remove-NetFirewallRule -DisplayName \'Disabling Port Inbound"+ port + "\'";
+        String[] args = {"powershell.exe", "-command", enable};
+        executeAndSend(multicast, senderID, PORT_ACK, true, args);
+        args[2] = enable2;
+        executeAndSend(multicast, senderID, PORT_ACK, true, args);
     }
 
     public static void executeAndSend(Multicast multicast,BigDecimal senderID, String operation, boolean output, String... command) throws IOException, InterruptedException {

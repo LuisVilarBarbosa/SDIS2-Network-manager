@@ -128,7 +128,7 @@ public class Multicast {
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), message.getSender().getId());  // what if body, filepath or sender is null?
                         else if (message.getOperation().equals(Command.SEND_COMMAND))
                             Command.executeCommand(this, message);
-                        else if(message.getOperation().equals(Command.SEND_COMMAND_ACK) || message.getOperation().equals(Command.TCP_ACK))
+                        else if(message.getOperation().equals(Command.SEND_COMMAND_ACK) || message.getOperation().equals(Command.TCP_ACK) || message.getOperation().equals(Command.PORT_ACK))
                             ((CommandResponse)message.getBody()).print();
                         else if(message.getOperation().equals(Command.TCP))
                             Command.executeTCP(this, message);
