@@ -237,11 +237,11 @@ public class Command implements Serializable {
             disable = "/sbin/iptables -A OUTNPUT -p tcp --destination-port " + port + " -j DROP";
             disable2 = "/sbin/iptables -A INPUT -p tcp --destination-port " + port + " -j DROP";
             disable3 = "/sbin/iptables-save";
-            String[] argsLinux = {disable};
+            String[] argsLinux = disable.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
-            argsLinux[0] = disable2;
+            argsLinux = disable2.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
-            argsLinux[0] = disable3;
+            argsLinux = disable3.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
         }
     }
@@ -261,10 +261,11 @@ public class Command implements Serializable {
             enable2 = "/sbin/iptables -D INPUT -p tcp --destination-port " + port + " -j DROP";
             enable3 = "/sbin/iptables-save";
             String[] argsLinux = {enable};
+
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
-            argsLinux[0] = enable2;
+            argsLinux = enable2.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
-            argsLinux[0] = enable2;
+            argsLinux = enable3.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
         }
     }
