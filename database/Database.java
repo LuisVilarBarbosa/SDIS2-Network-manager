@@ -114,7 +114,6 @@ public class Database {
 			PreparedStatement stmt = this.dbConnection.prepareStatement(insertUserSQL);
 			stmt.setString(1, username);
 			stmt.setBoolean(2, isAdmin);
-			System.out.println("Inserted");
 			return stmt.execute();
 		}
 		//In case user already exists

@@ -91,7 +91,7 @@ public class NetworkManager {
                 String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
                 Command c = new Command(m, finalCommands.get(0), args);
                 try {
-                    if (!c.execute()) {
+                    if (!c.execute(Client.admin)) {
                         break;
                     }
                 } catch (Exception e) {

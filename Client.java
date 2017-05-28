@@ -12,22 +12,57 @@ import login.Registrator;
 public class Client {
 	public static Database db;
 	public static boolean admin;
+	public static boolean loggedIn;
 	
 	public static boolean start(String dbFolderPath) {
-		String username = CredentialAsker.requestUsername();
-		String password = CredentialAsker.requestPassword();
+		String username = "";
+		String password = "";
+		if(CredentialAsker.requestAuthentication()) {
+			username = CredentialAsker.requestUsername();
+			password = CredentialAsker.requestPassword();
+			loggedIn = true;
+		} else {
+			loggedIn = false;
+		}
+		
 		try {
-			Registrator registrator = new Registrator("https://sigarra.up.pt/feup/pt/mob_val_geral.autentica?");
-			if(registrator.register(username, password)) {
-				System.out.println("Login successful");
+			
+			Registrator registrator;
+			boolean loginSucessful = true;
+			if(loggedIn) {
+				registrator = new Registrator("https://sigarra.up.pt/feup/pt/mob_val_geral.autentica?");
+				loginSucessful = registrator.register(username, password);
+				if(loginSucessful) {
+					System.out.println("Login successful");
+				} else {
+					System.out.println("Failed to login");
+					System.out.println("Server response: " + registrator.getServerMessage());
+					return false;
+				}
+			}
+			if(loginSucessful) {
 				try {
 					db = new Database("database/" + dbFolderPath);
-					if(db.open() != null) {
-						//admin = db.searchUser(username).getBoolean("idAdmin");
-						return true;
-
+					if(loggedIn) {
+						if(db.open() != null) {
+							ResultSet rs = db.searchUser(username);
+							if(!rs.isAfterLast()) {
+								admin = rs.getBoolean("isAdmin");
+							} else {
+								System.out.println("User not present in database. Creating entry...");
+								db.insertUser(username);
+								admin = false;
+							}
+							System.out.println("Welcome!");
+							return true;
+	
+						} else {
+							return false;
+						}
 					} else {
-						return false;
+						admin = false;
+						System.out.println("Welcome!");
+						return true;
 					}
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
@@ -42,8 +77,7 @@ public class Client {
 					return false;
 				}
 			} else {
-				System.out.println("Failed to login");
-				System.out.println("Server response: " + registrator.getServerMessage());
+				System.out.println("Some error ocurred. Exiting...");
 				return false;
 			}
 		} catch (IOException e) {

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Command implements Serializable {
+	private static final String notEnoughPermissions = "You don't have enough permissions";
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
     private Multicast multicast;
@@ -40,7 +41,7 @@ public class Command implements Serializable {
         return peers;
     }
 
-    public boolean execute() throws Exception {
+    public boolean execute(boolean isAdmin) throws Exception {
         if(command.equals("SEND_FILE")) {
             try {
                 TransmitFile.sendFile(multicast, args.get(0), getPeers(1));
@@ -49,6 +50,9 @@ public class Command implements Serializable {
             }
         }
         else if(command.equals("SEND_COMMAND")) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        	}
             BigDecimal[] peers = {};
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
                 if(args.size() > 2)
@@ -63,6 +67,9 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals("PORT")) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        	}
             String option = args.get(0);
             String port = args.get(1);
             String[] args = {option, port};
@@ -72,6 +79,9 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals("TCP")) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        	}
             String option = args.get(0);
             BigDecimal[] peers = getPeers(1);
 
@@ -79,6 +89,9 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals("HTTP")) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        	}
             String option = args.get(0);
 
             BigDecimal[] peers = getPeers(1);
@@ -87,6 +100,9 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals("FTP")) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        	}
             String option = args.get(0);
 
             BigDecimal[] peers = getPeers(1);
@@ -94,8 +110,9 @@ public class Command implements Serializable {
             Message msg = new Message("FTP", multicast.getThisPeer(), this, peers);
             multicast.send(msg);
         }
-        else if(command.equals("EXIT"))
+        else if(command.equals("EXIT")) {
             return false;
+        }
         return true;
     }
 
