@@ -4,13 +4,13 @@ import communication.Message;
 import communication.Multicast;
 import communication.Node;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileOwnerAttributeView;
-import java.nio.file.attribute.UserPrincipal;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,7 +22,7 @@ public class TransmitFile {
 
     /**
      * Attempts to calculate the size of a file or directory.
-     *
+     * <p>
      * <p>
      * Since the operation is non-atomic, the returned value may be inaccurate.
      * However, this method is quick and does its best.
@@ -65,11 +65,11 @@ public class TransmitFile {
     }
 
     public static boolean deleteDirectory(File directory) {
-        if(directory.isDirectory()) {
+        if (directory.isDirectory()) {
             File[] files = directory.listFiles();
-            if(files!=null) {
-                for(File file : files) {
-                    if(file.isDirectory())
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory())
                         deleteDirectory(file);
                     else
                         file.delete();
@@ -91,12 +91,12 @@ public class TransmitFile {
 
         int numBytesRead = 0;
         int actualChunk = 0;
-        double totalNumChunks = Math.ceil((double)filesize/64000);
+        double totalNumChunks = Math.ceil((double) filesize / 64000);
 
-        while(numBytesRead < filesize) {
+        while (numBytesRead < filesize) {
             byte[] body = new byte[64000];
             int numRead = fis.read(body);
-            numBytesRead+=numRead;
+            numBytesRead += numRead;
             byte[] content = Arrays.copyOfRange(body, 0, numRead);
 
             FileData partialFile = new FileData(fileName, filesize, filepath, hashedFileId, username, content, actualChunk, totalNumChunks);
@@ -110,7 +110,7 @@ public class TransmitFile {
 
     public static void receiveFile(Message msg, Multicast mc) {
         /* Get data from message */
-        FileData fileData = (FileData)msg.getBody();
+        FileData fileData = (FileData) msg.getBody();
         String folderName = fileData.getHashedFileId();
         int actualChunk = fileData.getActualChunk();
         double totalNumChunks = fileData.getTotalNumChunks();
@@ -123,14 +123,14 @@ public class TransmitFile {
         Path path = Paths.get(tempFolder + "/" + actualChunk);
         Path folderPath = Paths.get(tempFolder);
 
-        byte[] data = (byte[])fileData.getBody();
+        byte[] data = (byte[]) fileData.getBody();
         try {
             Files.createDirectories(path.getParent());
             Files.write(path, data);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if(actualChunk == (totalNumChunks - 1)) {
+        if (actualChunk == (totalNumChunks - 1)) {
             Message message;
             if (size(folderPath) == filesize) {
                 String filePath = "database/" + peerId + "/" + folderName + "/" + filename;
@@ -141,13 +141,12 @@ public class TransmitFile {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                for(int i = 0; i < totalNumChunks; i++) {
+                for (int i = 0; i < totalNumChunks; i++) {
                     Path pathTemp = Paths.get(tempFolder + "/" + i);
-                    if(!Files.exists(pathTemp)) {
+                    if (!Files.exists(pathTemp)) {
                         message = new Message(ResendFile, mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
                         break;
-                    }
-                    else {
+                    } else {
                         try {
                             File fileTemp = new File(tempFolder + "/" + i);
                             FileInputStream fis = new FileInputStream(fileTemp);
@@ -167,7 +166,7 @@ public class TransmitFile {
 
                             fos.flush();
                             fos.close();
-							fis.close();
+                            fis.close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -175,8 +174,7 @@ public class TransmitFile {
                 }
                 File pathToDelete = new File(tempFolder);
                 deleteDirectory(pathToDelete);
-            }
-            else
+            } else
                 message = new Message(ResendFile, mc.getThisPeer(), msg.getBody(), msg.getSender().getId());
             mc.send(message);
         }

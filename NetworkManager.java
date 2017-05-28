@@ -42,10 +42,10 @@ public class NetworkManager {
                     return;
                 }
             }
-            
-            if(!Client.start(publicHostName + "_" + Integer.toString(publicHostPort))) {
-            	System.out.println("Could not open database");
-            	return;
+
+            if (!Client.start(publicHostName + "_" + Integer.toString(publicHostPort))) {
+                System.out.println("Could not open database");
+                return;
             }
 
         }
@@ -58,7 +58,7 @@ public class NetworkManager {
     }
 
     private void receiveCommand(Multicast m, String username) {
-        while(true) {
+        while (true) {
             System.out.println("Write 'list' to view the availale commands");
             Scanner s = new Scanner(System.in);
 
@@ -67,9 +67,9 @@ public class NetworkManager {
             final String regex = "([SEND_COMMAND]+\\s((-windows|-linux)\\s)?\".+(\\s\\w+)*\"(\\s[0-9]+)*|LIST|list|EXIT|exit|LIST_USERS|list_users|LIST_PEERS|list_peers|\\w+\\s(-enable|-disable)\\s*[0-9]*(\\s[0-9]+)*)|[SEND_FILE]+\\s\".+\"|[CHANGE_PERMISSIONS]+\\s\\w+\\s(regular|REGULAR|admin|ADMIN)";
             final Pattern pattern = Pattern.compile(regex);
             final Matcher matcher = pattern.matcher(readCommand);
-            if(!matcher.matches() && !readCommand.equalsIgnoreCase("change_permissions"))
+            if (!matcher.matches() && !readCommand.equalsIgnoreCase("change_permissions"))
                 System.out.println("INVALID COMMAND");
-            else if(readCommand.equalsIgnoreCase("list")){
+            else if (readCommand.equalsIgnoreCase("list")) {
                 System.out.println("AVAILABLE COMMANDS:");
                 System.out.println("   SEND_FILE <file path> [<peer_id>...]\n" +
                         "   SEND_COMMAND [-windows|-linux] \"<command>\" [<peer_id>...]\n" +
@@ -81,8 +81,7 @@ public class NetworkManager {
                         "   LIST_USERS\n" +
                         "   LIST_PEERS\n" +
                         "   EXIT\n");
-            }
-            else {
+            } else {
                 String[] commandsTemp = readCommand.split("\"");
 
                 ArrayList<String> finalCommands = new ArrayList<>();
@@ -119,10 +118,11 @@ public class NetworkManager {
         Integer value = null;
         do {
             try {
-             value=Integer.parseInt(scanner.next());
-            }catch(NumberFormatException e) {}
+                value = Integer.parseInt(scanner.next());
+            } catch (NumberFormatException e) {
+            }
             if (value == null || value < min || value > max)
-                System.out.println("Invalid value." );
+                System.out.println("Invalid value.");
         } while (value == null || value < min || value > max);
         return value;
     }
@@ -130,11 +130,11 @@ public class NetworkManager {
     private void startMenu() {
         System.out.println("1-Login");
         System.out.println("2-Register");
-        int option = getResponse(1,2);
+        int option = getResponse(1, 2);
         switch (option) {
             case 1:
-            login();
-            break;
+                login();
+                break;
             case 2:
                 register();
                 break;

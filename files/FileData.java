@@ -1,7 +1,6 @@
 package files;
 
 import java.io.Serializable;
-import java.nio.file.attribute.UserPrincipal;
 
 public class FileData implements Serializable {
     private String filename;

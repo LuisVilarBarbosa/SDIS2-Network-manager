@@ -40,7 +40,7 @@ public class Node implements Serializable {
     }
 
     public void removeDescendant(Node node) {
-        if(!children.remove(node)) {
+        if (!children.remove(node)) {
             for (Node n : children) {
                 n.removeDescendant(node);
             }

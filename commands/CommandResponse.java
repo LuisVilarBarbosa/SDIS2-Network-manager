@@ -21,15 +21,15 @@ public class CommandResponse implements Serializable {
     }
 
     public void print() {
-        if(!outputStreamLines.isEmpty()) {
+        if (!outputStreamLines.isEmpty()) {
             System.out.println("OUTPUT:");
-            for(String outputLine : outputStreamLines) {
+            for (String outputLine : outputStreamLines) {
                 System.out.println("    " + outputLine);
             }
         }
-        if(!errorStreamLines.isEmpty()) {
+        if (!errorStreamLines.isEmpty()) {
             System.out.println("ERROR:");
-            for(String errorLine : errorStreamLines) {
+            for (String errorLine : errorStreamLines) {
                 System.out.println("    " + errorLine);
             }
         }

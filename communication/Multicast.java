@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -57,16 +56,16 @@ public class Multicast {
 
     public void showConnectedPeers() {
         StringBuilder stringBuilder = new StringBuilder();
-        if(root != null)
+        if (root != null)
             getConnectedPeers(root, stringBuilder, "");
         System.out.println(stringBuilder);
     }
 
     private synchronized void getConnectedPeers(Node root, StringBuilder stringBuilder, String indentation) {
-        if(root != this.root)
+        if (root != this.root)
             stringBuilder.append(indentation).append(root.getId()).append("\t").append(root.getHostName()).append("\t").append(root.getPort()).append("\n");
         for (Node child : root.getChildren())
-                getConnectedPeers(child, stringBuilder, indentation + " ");
+            getConnectedPeers(child, stringBuilder, indentation + " ");
     }
 
     private void generateDispatcherThread() {
@@ -129,16 +128,16 @@ public class Multicast {
                             TransmitFile.sendFile(this, ((FileData) message.getBody()).getFilepath(), ((FileData) message.getBody()).getUsername(), message.getSender().getId());  // what if body, filepath or sender is null?
                         else if (message.getOperation().equals(Command.SEND_COMMAND))
                             Command.executeCommand(this, message);
-                        else if(message.getOperation().equals(Command.SEND_COMMAND_ACK) || message.getOperation().equals(Command.TCP_ACK) || message.getOperation().equals(Command.PORT_ACK))
-                            ((CommandResponse)message.getBody()).print();
-                        else if(message.getOperation().equals(Command.TCP))
+                        else if (message.getOperation().equals(Command.SEND_COMMAND_ACK) || message.getOperation().equals(Command.TCP_ACK) || message.getOperation().equals(Command.PORT_ACK))
+                            ((CommandResponse) message.getBody()).print();
+                        else if (message.getOperation().equals(Command.TCP))
                             Command.executeTCP(this, message);
-                        else if(message.getOperation().equals(Command.PORT))
+                        else if (message.getOperation().equals(Command.PORT))
                             Command.executePort(this, message);
-                        else if(message.getOperation().equals(Command.HTTP) || message.getOperation().equals(Command.HTTPS) || message.getOperation().equals(Command.FTP))
+                        else if (message.getOperation().equals(Command.HTTP) || message.getOperation().equals(Command.HTTPS) || message.getOperation().equals(Command.FTP))
                             Command.executeProtocol(this, message);
-                        else if(message.getOperation().equals(Command.CHANGE_PERMISSIONS))
-                        	Command.executeChangePermissions(message);
+                        else if (message.getOperation().equals(Command.CHANGE_PERMISSIONS))
+                            Command.executeChangePermissions(message);
                     }
                 }
             }
@@ -154,7 +153,7 @@ public class Multicast {
         message.setLastSender(thisPeer);
         ArrayList<BigDecimal> receivers = message.getReceivers();
 
-        if(descendantIsReceiver(receivers)) {
+        if (descendantIsReceiver(receivers)) {
             for (Node n : thisPeer.getChildren()) {
                 if (!lastSender.equals(n)) {
                     try {
@@ -177,11 +176,11 @@ public class Multicast {
     }
 
     private boolean descendantIsReceiver(ArrayList<BigDecimal> receivers) {
-        if(receivers.isEmpty())
+        if (receivers.isEmpty())
             return true;
         for (BigDecimal receiverId : receivers) {
             Node receiver = root.getNode(receiverId);
-            if(thisPeer.isDescendant(receiver))
+            if (thisPeer.isDescendant(receiver))
                 return true;
         }
         return false;
@@ -253,7 +252,7 @@ public class Multicast {
         if (!changeParentRequestAux(root)) {
             parent = this.root;
             send(new Message(ChangeNodeParent, root, thisPeer));    // simulating that root is informing that added a new child
-            if(thisPeer.getChildren().isEmpty())
+            if (thisPeer.getChildren().isEmpty())
                 System.err.println("Unable to send a change parent request to a new parent that is not my descendant. I am the only one connected.");
         }
     }
@@ -303,7 +302,7 @@ public class Multicast {
     }
 
     private void removeNode(Message message) {
-        removeNodeAux((Node)message.getBody());
+        removeNodeAux((Node) message.getBody());
     }
 
     private void removeNode(Node node) {
@@ -312,11 +311,10 @@ public class Multicast {
     }
 
     private synchronized void removeNodeAux(Node node) {
-        if(parent != null && parent.equals(node)) {
+        if (parent != null && parent.equals(node)) {
             parent = null;
             changeParentRequest();
-        }
-        else
+        } else
             root.removeDescendant(node);
     }
 }
