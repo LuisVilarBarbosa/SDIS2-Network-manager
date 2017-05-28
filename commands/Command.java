@@ -162,10 +162,10 @@ public class Command implements Serializable {
         		return true;
         	}
         }
-        else if(command.equals(LIST_PEERS)){
+        else if(command.equalsIgnoreCase(LIST_PEERS)){
             multicast.showConnectedPeers();
         }
-        else if(command.equals(EXIT)) {
+        else if(command.equalsIgnoreCase(EXIT)) {
             return false;
         }
         return true;
@@ -207,41 +207,66 @@ public class Command implements Serializable {
         {
             String[] splitted = body.get(1).split(" ");
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, splitted);
-        } 
+        }
 
 
     }
 
     public static void executePort(Multicast multicast, Message message) throws Exception {
         String os = System.getProperty("os.name");
-        String[] info = (String[])message.getBody();
+        String[] info = (String[]) message.getBody();
         String option = info[0];
         String port = info[1];
-        if(os.contains("Windows"))
-        {
-            if(option.contains("disable"))
-                blockPort(multicast, port, message.getSender().getId());
-            else if(option.contains("enable"))
-                allowPort(multicast, port, message.getSender().getId());
+        if (option.contains("disable"))
+            blockPort(multicast, port, message.getSender().getId(), os);
+        else if (option.contains("enable"))
+            allowPort(multicast, port, message.getSender().getId(), os);
+}
+
+    public static void blockPort(Multicast multicast,String port, BigDecimal senderID, String os) throws IOException, InterruptedException {
+        String disable = null, disable2 = null, disable3= null;
+        if(os.contains("Windows")) {
+            disable = "New-NetFirewallRule -DisplayName \'Disabling Port Outbound" + port + "\' -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
+            disable2 = "New-NetFirewallRule -DisplayName \'Disabling Port Inbound" + port + "\' -Action Block -Direction Inbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
+            String[] argsWindows = {"powershell.exe", "-command", disable};
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsWindows);
+            argsWindows[2] = disable2;
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsWindows);
+        }
+        else if(os.contains("Linux")){
+            disable = "/sbin/iptables -A OUTNPUT -p tcp --destination-port " + port + " -j DROP";
+            disable2 = "/sbin/iptables -A INPUT -p tcp --destination-port " + port + " -j DROP";
+            disable3 = "/sbin/iptables-save";
+            String[] argsLinux = {disable};
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
+            argsLinux[0] = disable2;
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
+            argsLinux[0] = disable3;
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
         }
     }
 
-    public static void blockPort(Multicast multicast,String port, BigDecimal senderID) throws IOException, InterruptedException {
-        String disable = "New-NetFirewallRule -DisplayName \'Disabling Port Outbound"+ port + "\' -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
-        String disable2 = "New-NetFirewallRule -DisplayName \'Disabling Port Inbound"+ port + "\' -Action Block -Direction Inbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
-        String[] args = {"powershell.exe", "-command", disable};
-        executeAndSend(multicast, senderID, PORT_ACK, true, args);
-        args[2] = disable2;
-        executeAndSend(multicast, senderID, PORT_ACK, true, args);
-    }
-
-    public static void allowPort(Multicast multicast,String port, BigDecimal senderID) throws IOException, InterruptedException {
-        String enable = "Remove-NetFirewallRule -DisplayName \'Disabling Port Outbound"+ port + "\'";
-        String enable2 = "Remove-NetFirewallRule -DisplayName \'Disabling Port Inbound"+ port + "\'";
-        String[] args = {"powershell.exe", "-command", enable};
-        executeAndSend(multicast, senderID, PORT_ACK, true, args);
-        args[2] = enable2;
-        executeAndSend(multicast, senderID, PORT_ACK, true, args);
+    public static void allowPort(Multicast multicast,String port, BigDecimal senderID, String os) throws IOException, InterruptedException {
+        String enable = null, enable2 = null, enable3 = null;
+        if(os.contains("Windows")) {
+            enable = "Remove-NetFirewallRule -DisplayName \'Disabling Port Outbound" + port + "\'";
+            enable2 = "Remove-NetFirewallRule -DisplayName \'Disabling Port Inbound" + port + "\'";
+            String[] args = {"powershell.exe", "-command", enable};
+            executeAndSend(multicast, senderID, PORT_ACK, true, args);
+            args[2] = enable2;
+            executeAndSend(multicast, senderID, PORT_ACK, true, args);
+        }
+        else if(os.contains("Linux")){
+            enable = "/sbin/iptables -D OUTNPUT -p tcp --destination-port " + port + " -j DROP";
+            enable2 = "/sbin/iptables -D INPUT -p tcp --destination-port " + port + " -j DROP";
+            enable3 = "/sbin/iptables-save";
+            String[] argsLinux = {enable};
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
+            argsLinux[0] = enable2;
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
+            argsLinux[0] = enable2;
+            executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
+        }
     }
 
     public static void executeAndSend(Multicast multicast,BigDecimal senderID, String operation, boolean output, String... command) throws IOException, InterruptedException {
@@ -270,14 +295,11 @@ public class Command implements Serializable {
     }
 
     public static void changeProtocolStatus(Multicast multicast, String[] ports, String option, Message message, String os) throws IOException, InterruptedException {
-        if(os.contains("Windows"))
-        {
-            for (String port: ports) {
-                if(option.contains("disable"))
-                    blockPort(multicast, port, message.getSender().getId());
-                else if(option.contains("enable"))
-                    allowPort(multicast, port, message.getSender().getId());
-            }
+        for (String port : ports) {
+            if (option.contains("disable"))
+                blockPort(multicast, port, message.getSender().getId(), os);
+            else if (option.contains("enable"))
+                allowPort(multicast, port, message.getSender().getId(), os);
         }
     }
 }
