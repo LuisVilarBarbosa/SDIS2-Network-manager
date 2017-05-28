@@ -198,12 +198,16 @@ public class Multicast {
 
     private void send(Socket socket, Message message) throws IOException {
         TCP.send(socket, message);
-        //System.out.println("< " + message);
+        if(root != null)
+            showConnectedPeers();
+        System.out.println("< " + message);
     }
 
     private Message receive(Socket socket) throws IOException {
         Message message = (Message) TCP.receive(socket);
-        //System.out.println("> " + message);
+        if(root != null)
+            showConnectedPeers();
+        System.out.println("> " + message);
         return message;
     }
 

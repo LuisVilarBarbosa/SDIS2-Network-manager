@@ -134,17 +134,18 @@ public class Command implements Serializable {
         if(message.getBody() instanceof  ArrayList<?>)
             body = ((ArrayList<String>) message.getBody());
         String firstArg = body.get(0);
-        ExecuteCommand ec = null;
         String[] cmdTemp = null;
         if ((firstArg.contains("windows") && os.contains("Windows"))
                 || (firstArg.contains("linux") && os.contains("Linux"))) {
              cmdTemp = body.get(1).split(" ");
+            executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
+
         } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
             cmdTemp = body.get(0).split(" ");
-        }
-        if (ec != null) {
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
         }
+
+
     }
 
     public static void executePort(Multicast multicast, Message message) throws Exception {
