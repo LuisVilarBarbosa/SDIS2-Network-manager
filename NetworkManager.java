@@ -63,7 +63,7 @@ public class NetworkManager {
 
             String readCommand = s.nextLine();
 
-            final String regex = "([SEND_COMMAND]+\\\\s((-windows|-linux)\\\\s)?\\\".+(\\\\s\\\\w+)*\\\"(\\\\s[0-9]+)*|LIST|list|EXIT|exit|LIST_USERS|list_users|LIST_PEERS|list_peers|\\\\w+\\\\s(-enable|-disable)\\\\s*[0-9]*(\\\\s[0-9]+)*)|[SEND_FILE]+\\\\s\\\".+\\\"|[CHANGE_PERMISSIONS]+\\\\s\\\\w+\\\\s(regular|REGULAR|admin|ADMIN)";
+            final String regex = "([SEND_COMMAND]+\\s((-windows|-linux)\\s)?\".+(\\s\\w+)*\"(\\s[0-9]+)*|LIST|list|EXIT|exit|LIST_USERS|list_users|LIST_PEERS|list_peers|\\w+\\s(-enable|-disable)\\s*[0-9]*(\\s[0-9]+)*)|[SEND_FILE]+\\s\".+\"|[CHANGE_PERMISSIONS]+\\s\\w+\\s(regular|REGULAR|admin|ADMIN)";
             final Pattern pattern = Pattern.compile(regex);
             final Matcher matcher = pattern.matcher(readCommand);
             if(!matcher.matches())
