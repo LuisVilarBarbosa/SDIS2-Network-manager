@@ -236,7 +236,7 @@ public class Command implements Serializable {
             executeAndSend(multicast, senderID, PORT_ACK, true, argsWindows);
         }
         else if(os.contains("Linux")){
-            disable = "/sbin/iptables -A OUTNPUT -p tcp --destination-port " + port + " -j DROP";
+            disable = "/sbin/iptables -A OUTPUT -p tcp --destination-port " + port + " -j DROP";
             disable2 = "/sbin/iptables -A INPUT -p tcp --destination-port " + port + " -j DROP";
             disable3 = "/sbin/iptables-save";
             String[] argsLinux = disable.split(" ");
@@ -259,11 +259,10 @@ public class Command implements Serializable {
             executeAndSend(multicast, senderID, PORT_ACK, true, args);
         }
         else if(os.contains("Linux")){
-            enable = "/sbin/iptables -D OUTNPUT -p tcp --destination-port " + port + " -j DROP";
+            enable = "/sbin/iptables -D OUTPUT -p tcp --destination-port " + port + " -j DROP";
             enable2 = "/sbin/iptables -D INPUT -p tcp --destination-port " + port + " -j DROP";
             enable3 = "/sbin/iptables-save";
-            String[] argsLinux = {enable};
-
+            String[] argsLinux = enable.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
             argsLinux = enable2.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
