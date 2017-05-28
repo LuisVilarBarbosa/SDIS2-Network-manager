@@ -4,6 +4,8 @@ import communication.Multicast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NetworkManager {
 
@@ -57,7 +59,12 @@ public class NetworkManager {
 
             String readCommand = s.nextLine();
 
-            if(readCommand.toLowerCase().contains("list")){
+            final String regex = "([A-Z_]+\\s((-windows|-linux)\\s)?\"\\w+(\\s\\w+)*\"(\\s[0-9]+)*|LIST|list)";
+            final Pattern pattern = Pattern.compile(regex);
+            final Matcher matcher = pattern.matcher(readCommand);
+            if(!matcher.matches())
+                System.out.println("INVALID COMMAND");
+            else if(readCommand.toLowerCase().contains("list")){
                 System.out.println("AVAILABLE COMMANDS:");
                 System.out.println("   SEND_FILE <file path> [<peer_id>...]\n" +
                         "   SEND_COMMAND [-windows|-linux] \"<command>\" [<peer_id>...]\n" +

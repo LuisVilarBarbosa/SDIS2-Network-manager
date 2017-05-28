@@ -4,6 +4,7 @@ import communication.Message;
 import communication.Multicast;
 import files.TransmitFile;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -134,20 +135,15 @@ public class Command implements Serializable {
             body = ((ArrayList<String>) message.getBody());
         String firstArg = body.get(0);
         ExecuteCommand ec = null;
+        String[] cmdTemp = null;
         if ((firstArg.contains("windows") && os.contains("Windows"))
                 || (firstArg.contains("linux") && os.contains("Linux"))) {
-            String[] cmdTemp = body.get(1).split(" ");
-            ec = new ExecuteCommand(cmdTemp);
+             cmdTemp = body.get(1).split(" ");
         } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
-            String[] cmdTemp = body.get(0).split(" ");
-            ec = new ExecuteCommand(cmdTemp);
+            cmdTemp = body.get(0).split(" ");
         }
         if (ec != null) {
-            ec.setStoreOutput(true);
-            ec.run();
-            CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-            Message response = new Message(SEND_COMMAND_ACK, mc.getThisPeer(), cr, message.getSender().getId());
-            mc.send(response);
+            executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
         }
     }
 
@@ -156,24 +152,34 @@ public class Command implements Serializable {
         String[] info = (String[])message.getBody();
         String option = info[0];
         String port = info[1];
-        ArrayList<String> args = new ArrayList<>();
         if(os.contains("Windows"))
         {
-            args.add(powershell);
-            if(option.contains("disable")){
-                args.add("New-NetFirewallRule -DisplayName \"Disabling Port "+ port + "\" -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port + " -Verb RunAs");
-            }
-            else if(option.contains("enable")){
-                args.add("New-NetFirewallRule -DisplayName \"Enabling Port "+ port + "\" -Action Allow -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port + " -Verb RunAs");
-
-            }
+            if(option.contains("disable"))
+                blockPort(multicast, port, message.getSender().getId());
+            else if(option.contains("enable"))
+                allowPort(multicast, port, message.getSender().getId());
         }
-        String[] allArgs = new String[args.size()];
-        allArgs = args.toArray(allArgs);
-        ExecuteCommand ec = new ExecuteCommand(allArgs);
+    }
+
+    public static void blockPort(Multicast multicast,String port, BigDecimal senderID) throws IOException, InterruptedException {
+        String disable = "New-NetFirewallRule -DisplayName \"Disabling Port "+ port + "\" -Action Block -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
+        String[] args = {"powershell.exe", disable};
+        executeAndSend(multicast, senderID, PORT_ACK, true, args);
+    }
+
+    public static void allowPort(Multicast multicast,String port, BigDecimal senderID) throws IOException, InterruptedException {
+        String enable = "New-NetFirewallRule -DisplayName \"Enabling Port "+ port + "\" -Action Allow -Direction Outbound -DynamicTarget Any -EdgeTraversalPolicy Block -Profile Any -Protocol tcp -RemotePort " + port;
+        String[] args = {"powershell.exe", enable};
+        executeAndSend(multicast, senderID, PORT_ACK, true, enable);
+    }
+
+    public static void executeAndSend(Multicast multicast,BigDecimal senderID, String operation, boolean output, String... command) throws IOException, InterruptedException {
+        ExecuteCommand ec = new ExecuteCommand(command);
+        if(output)
+            ec.setStoreOutput(true);
         ec.run();
         CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
-        Message response = new Message(PORT_ACK, multicast.getThisPeer(), cr, message.getSender().getId());
+        Message response = new Message(operation, multicast.getThisPeer(), cr, senderID);
         multicast.send(response);
     }
 }
