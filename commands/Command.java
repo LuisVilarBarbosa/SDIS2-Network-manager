@@ -27,6 +27,7 @@ public class Command implements Serializable {
     public static final String FTP = "FTP";
     public static final String LIST_USERS = "LIST_USERS";
     public static final String CHANGE_PERMISSIONS = "CHANGE_PERMISSIONS";
+    public static final String LIST_PEERS = "LIST_PEERS";
     private static final String EXIT = "EXIT";
     private static final String powershell = "powershell.exe";
     private static final String[] portsHTTP = {"80", "8080", "8008"};
@@ -161,6 +162,9 @@ public class Command implements Serializable {
         		return true;
         	}
         }
+        else if(command.equals(LIST_PEERS)){
+            multicast.showConnectedPeers();
+        }
         else if(command.equals(EXIT)) {
             return false;
         }
@@ -195,11 +199,13 @@ public class Command implements Serializable {
         String[] cmdTemp = new String[3];
         cmdTemp[0] = "powershell.exe";
         cmdTemp[1] = "-command";
-        if ((firstArg.contains("windows") && os.contains("Windows"))
-                || (firstArg.contains("linux") && os.contains("Linux"))) {
-             cmdTemp[2] = body.get(1);
+        if (firstArg.contains("windows") && os.contains("Windows"))
+        {
+            cmdTemp[2] = body.get(1);
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
-
+        } else if(firstArg.contains("linux") && os.contains("Linux"))
+        {
+            executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, body.get(1));
         } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
             cmdTemp[2] = body.get(0);
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
