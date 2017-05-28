@@ -2,11 +2,15 @@ package commands;
 
 import communication.Message;
 import communication.Multicast;
+import database.Database;
 import files.TransmitFile;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.ClientInfoStatus;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +24,12 @@ public class Command implements Serializable {
     public static final String TCP_ACK = "TCP_ACK";
     public static final String HTTP = "HTTP";
     public static final String FTP = "FTP";
+    public static final String LIST_USERS = "LIST_USERS";
+    public static final String CHANGE_PERMISSIONS = "CHANGE_PERMISSIONS";
     private static final String EXIT = "EXIT";
     private static final String powershell = "powershell.exe";
+	private static final String notEnoughPermissions = "You don't have enough permissions";
+	
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
     private Multicast multicast;
@@ -51,7 +59,7 @@ public class Command implements Serializable {
         return peers;
     }
 
-    public boolean execute() {
+    public boolean execute(Database db, boolean isAdmin) throws Exception {
         if(command.equals(SEND_FILE)) {
             try {
                 TransmitFile.sendFile(multicast, args.get(0), getPeers(1));
@@ -60,6 +68,10 @@ public class Command implements Serializable {
             }
         }
         else if(command.equals(SEND_COMMAND)) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
             BigDecimal[] peers = {};
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
                 if(args.size() > 2)
@@ -72,6 +84,10 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals(PORT)) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
             String option = args.get(0);
             String port = args.get(1);
             String[] args = {option, port};
@@ -81,6 +97,10 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals(TCP)) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
             String option = args.get(0);
             BigDecimal[] peers = getPeers(1);
 
@@ -88,6 +108,10 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals(HTTP)) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
             String option = args.get(0);
 
             BigDecimal[] peers = getPeers(1);
@@ -96,6 +120,10 @@ public class Command implements Serializable {
             multicast.send(msg);
         }
         else if(command.equals(FTP)) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
             String option = args.get(0);
 
             BigDecimal[] peers = getPeers(1);
@@ -103,8 +131,59 @@ public class Command implements Serializable {
             Message msg = new Message(FTP, multicast.getThisPeer(), this, peers);
             multicast.send(msg);
         }
-        else if(command.equals(EXIT))
+        else if(command.equalsIgnoreCase(LIST_USERS)) {
+        	try {
+        		ResultSet rs = db.getAllUsers();
+	    		String status = "";
+	        	System.out.format("\n%-20s  %s\n", "Users", "Permissions");
+	        	System.out.println("------------------------");
+	        	while(!rs.isAfterLast()) {
+	        		if(rs.getBoolean("isAdmin")) {
+	        			status = "ADMIN";
+	        		} else {
+	        			status = "REGULAR";
+	        		}
+	        		System.out.format("%-20s= %s\n", rs.getString("username"), status);
+	        		rs.next();
+	        	}
+        	} catch(SQLException e) {
+        		e.printStackTrace();
+        		System.out.println("RIP");
+        	}
+        }
+        else if(command.equalsIgnoreCase(CHANGE_PERMISSIONS)) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
+        	String username = args.get(0);
+        	String permission = args.get(1);
+        	boolean isAdministrator = false;
+        	
+        	if(!permission.equalsIgnoreCase("regular") && !permission.equalsIgnoreCase("admin")){
+        		System.out.println("Not a valid type of user");
+        		return true;
+        	} else if(db.searchUser(username).isAfterLast()) {
+        		System.out.println("User not existant");
+        		return true;
+        	} else {
+        		if(permission.equalsIgnoreCase("regular")) {
+        			isAdministrator = false;
+        		} else if(permission.equalsIgnoreCase("admin")) {
+        			isAdministrator = true;
+        		} else {
+        			System.out.println("Error occured");
+        		}
+        		
+        		db.updateUser(username, isAdministrator);
+        		
+        		//TODO Atualizar as outras dbs
+        		return true;
+        	}
+        }
+        else if(command.equals(EXIT)) {
             return false;
+        }
         return true;
     }
 
