@@ -80,7 +80,7 @@ public class TransmitFile {
         return true;
     }
 
-    public static void sendFile(Multicast mc, String filepath, BigDecimal... peer) throws IOException, NoSuchAlgorithmException {
+    public static void sendFile(Multicast mc, String filepath, String username, BigDecimal... peer) throws IOException, NoSuchAlgorithmException {
         FileInputStream fis = new FileInputStream(filepath);
 
         File file = new File(filepath);
@@ -106,7 +106,8 @@ public class TransmitFile {
         for (byte b : digest) {
             sb.append(String.format("%02x", b & 0xff));
         }
-        String hashedFileId = sb.toString();
+        //String hashedFileId = sb.toString();
+        String hashedFileId = username;
 
         int numBytesRead = 0;
         int actualChunk = 0;

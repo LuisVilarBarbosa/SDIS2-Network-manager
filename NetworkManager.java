@@ -52,18 +52,18 @@ public class NetworkManager {
         NetworkManager n = new NetworkManager();
 
         //n.startMenu();
-        n.receiveCommand(m);
+        n.receiveCommand(m, Client.user);
         System.exit(0);
     }
 
-    private void receiveCommand(Multicast m) {
+    private void receiveCommand(Multicast m, String username) {
         while(true) {
             System.out.println("Write 'list' to view the availale commands");
             Scanner s = new Scanner(System.in);
 
             String readCommand = s.nextLine();
 
-            final String regex = "([SEND_COMMAND]+\\s((-windows|-linux)\\s)?\".+(\\s\\w+)*\"(\\s[0-9]+)*|LIST|list|EXIT|exit|CHANGE_PERMISSIONS|change_permissions|LIST_USERS|list_users|LIST_PEERS|list_peers|\\w+\\s(-enable|-disable)\\s*[0-9]*(\\s[0-9]+)*)";
+            final String regex = "([SEND_COMMAND]+\\s((-windows|-linux)\\s)?\".+(\\s\\w+)*\"(\\s[0-9]+)*|LIST|list|EXIT|exit|LIST_USERS|list_users|LIST_PEERS|list_peers|\\w+\\s(-enable|-disable)\\s*[0-9]*(\\s[0-9]+)*)|[SEND_FILE]+\\s\".+\"|[CHANGE_PERMISSIONS]+\\s\\w+\\s(regular|REGULAR|admin|ADMIN)";
             final Pattern pattern = Pattern.compile(regex);
             final Matcher matcher = pattern.matcher(readCommand);
             if(!matcher.matches())
@@ -100,7 +100,7 @@ public class NetworkManager {
                 String[] finalCommandsArr = new String[finalCommands.size()];
                 finalCommandsArr = finalCommands.toArray(finalCommandsArr);
                 String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
-                Command c = new Command(m, finalCommands.get(0), args);
+                Command c = new Command(m, finalCommands.get(0), username, args);
                 try {
                     if (!c.execute(Client.db, Client.admin)) {
                         break;
