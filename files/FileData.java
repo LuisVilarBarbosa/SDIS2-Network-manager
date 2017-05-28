@@ -11,12 +11,14 @@ public class FileData implements Serializable {
     private Object body;
     private int actualChunk;
     private double totalNumChunks;
+    private String username;
 
-    public FileData(String filename, long filesize, String filepath, String hashedFileId, Object body, int actualChunk, double totalNumChunks) {
+    public FileData(String filename, long filesize, String filepath, String hashedFileId, String username, Object body, int actualChunk, double totalNumChunks) {
         this.filename = filename;
         this.filesize = filesize;
         this.filepath = filepath;
         this.hashedFileId = hashedFileId;
+        this.username = username;
         this.body = body;
         this.actualChunk = actualChunk;
         this.totalNumChunks = totalNumChunks;
@@ -48,5 +50,9 @@ public class FileData implements Serializable {
 
     public String getFilename() {
         return filename;
+    }
+
+    public String getUsername() {
+        return username;
     }
 }

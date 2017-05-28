@@ -2,7 +2,7 @@ package commands;
 
 import communication.Message;
 import communication.Multicast;
-import database.Database;
+import db.Database;
 import files.TransmitFile;
 
 import java.io.IOException;
@@ -262,8 +262,7 @@ public class Command implements Serializable {
             enable = "/sbin/iptables -D OUTPUT -p tcp --destination-port " + port + " -j DROP";
             enable2 = "/sbin/iptables -D INPUT -p tcp --destination-port " + port + " -j DROP";
             enable3 = "/sbin/iptables-save";
-            String[] argsLinux = {enable};
-
+            String[] argsLinux = enable.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);
             argsLinux = enable2.split(" ");
             executeAndSend(multicast, senderID, PORT_ACK, true, argsLinux);

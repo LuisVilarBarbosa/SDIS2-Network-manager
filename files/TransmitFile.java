@@ -87,26 +87,6 @@ public class TransmitFile {
         String fileName = file.getName();
 
         int filesize = (int) file.length();
-
-        // Owner
-        Path path = Paths.get(filepath);
-        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
-        UserPrincipal owner = ownerAttributeView.getOwner();
-
-        // Last modified
-        long lastModified = file.lastModified();
-
-        String fileId = fileName + owner.toString() + Long.toString(lastModified);
-
-        // Applying SHA256 to fileId
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(fileId.getBytes("UTF-8"));
-        byte[] digest = md.digest();
-        StringBuffer sb = new StringBuffer();
-        for (byte b : digest) {
-            sb.append(String.format("%02x", b & 0xff));
-        }
-        //String hashedFileId = sb.toString();
         String hashedFileId = username;
 
         int numBytesRead = 0;
@@ -119,7 +99,7 @@ public class TransmitFile {
             numBytesRead+=numRead;
             byte[] content = Arrays.copyOfRange(body, 0, numRead);
 
-            FileData partialFile = new FileData(fileName, filesize, filepath, hashedFileId, content, actualChunk, totalNumChunks);
+            FileData partialFile = new FileData(fileName, filesize, filepath, hashedFileId, username, content, actualChunk, totalNumChunks);
 
             Message msg = new Message(SendFile, mc.getThisPeer(), partialFile, peer);
             mc.send(msg);
