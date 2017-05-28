@@ -199,17 +199,15 @@ public class Command implements Serializable {
         String[] cmdTemp = new String[3];
         cmdTemp[0] = "powershell.exe";
         cmdTemp[1] = "-command";
-        if (firstArg.contains("windows") && os.contains("Windows"))
+        if ((firstArg.contains("windows") && os.contains("Windows")) || ((!firstArg.contains("windows") && !firstArg.contains("Linux")) && os.contains("Windows")))
         {
             cmdTemp[2] = body.get(1);
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
-        } else if(firstArg.contains("linux") && os.contains("Linux"))
+        } else if((firstArg.contains("linux") && os.contains("Linux")) || ((!firstArg.contains("windows") && !firstArg.contains("Linux")) && os.contains("Linux")))
         {
-            executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, body.get(1));
-        } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
-            cmdTemp[2] = body.get(0);
-            executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
-        }
+            String[] splitted = body.get(1).split(" ");
+            executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, splitted);
+        } 
 
 
     }
