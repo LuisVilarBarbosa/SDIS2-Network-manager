@@ -69,8 +69,8 @@ public class NetworkManager {
                         "   TCP <-enable|-disable> [<peer_id>...]\n" +
                         "   HTTP <-enable|-disable> [<peer_id>...]\n" +
                         "   FTP <-enable|-disable> [<peer_id>...]\n" +
-                        "	CHANGE_PERMISSIONS <username> <REGULAR|ADMIN>\n" +
-                        "	LIST_USERS\n" +
+                        "   CHANGE_PERMISSIONS <username> <REGULAR|ADMIN>\n" +
+                        "   LIST_USERS\n" +
                         "   EXIT\n");
             }
             else {

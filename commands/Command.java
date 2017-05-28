@@ -123,16 +123,19 @@ public class Command implements Serializable {
         	try {
         		ResultSet rs = db.getAllUsers();
 	    		String status = "";
-	        	System.out.println("User             Status");
+	        	System.out.format("\n%-20s  %s\n", "Users", "Permissions");
+	        	System.out.println("------------------------");
 	        	while(!rs.isAfterLast()) {
 	        		if(rs.getBoolean("isAdmin")) {
 	        			status = "ADMIN";
 	        		} else {
 	        			status = "REGULAR";
 	        		}
-	        		System.out.format("%-20s= %s", rs.getInt("user"), status);
+	        		System.out.format("%-20s= %s\n", rs.getString("username"), status);
+	        		rs.next();
 	        	}
         	} catch(SQLException e) {
+        		e.printStackTrace();
         		System.out.println("RIP");
         	}
         }
