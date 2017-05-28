@@ -2,7 +2,7 @@ package commands;
 
 import communication.Message;
 import communication.Multicast;
-import database.Database;
+import db.Database;
 import files.TransmitFile;
 
 import java.io.IOException;

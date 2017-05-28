@@ -5,7 +5,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import database.Database;
+import db.Database;
 import login.CredentialAsker;
 import login.Registrator;
 
