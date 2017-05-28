@@ -41,4 +41,25 @@ public class CredentialAsker {
 		return password;
 	}
 	
+	public static boolean requestAuthentication() {
+		System.out.print("Do you want to log in? (y/n)");
+		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+		String permission = "";
+		
+		try {
+			permission = input.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if(permission.equals("y") || permission.equals("Y")) {
+			return true;
+		} else if(permission.equals("n") || permission.equals("N")) {
+			return false;
+		} else {
+			System.out.println("Invalid input, try again");
+			return requestAuthentication();
+		}
+	}
+	
 }
