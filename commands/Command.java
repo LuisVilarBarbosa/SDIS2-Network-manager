@@ -19,9 +19,13 @@ public class Command implements Serializable {
     public static final String TCP = "TCP";
     public static final String TCP_ACK = "TCP_ACK";
     public static final String HTTP = "HTTP";
+    public static final String HTTPS = "HTTPS";
     public static final String FTP = "FTP";
     private static final String EXIT = "EXIT";
     private static final String powershell = "powershell.exe";
+    private static final String[] portsHTTP = {"80", "8080", "8008"};
+    private static final String[] portsHTTPS = {"443"};
+    private static final String[] portsFTP = {"20", "21"};
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
     private Multicast multicast;
@@ -80,27 +84,11 @@ public class Command implements Serializable {
             Message msg = new Message(PORT, multicast.getThisPeer(), args, peers);
             multicast.send(msg);
         }
-        else if(command.equals(TCP)) {
+        else if(command.equals(TCP) || command.equals(HTTP) || command.equals(HTTPS) || command.equals(FTP)) {
             String option = args.get(0);
             BigDecimal[] peers = getPeers(1);
 
-            Message msg = new Message(TCP, multicast.getThisPeer(), option, peers);
-            multicast.send(msg);
-        }
-        else if(command.equals(HTTP)) {
-            String option = args.get(0);
-
-            BigDecimal[] peers = getPeers(1);
-
-            Message msg = new Message(HTTP, multicast.getThisPeer(), this, peers);
-            multicast.send(msg);
-        }
-        else if(command.equals(FTP)) {
-            String option = args.get(0);
-
-            BigDecimal[] peers = getPeers(1);
-
-            Message msg = new Message(FTP, multicast.getThisPeer(), this, peers);
+            Message msg = new Message(command, multicast.getThisPeer(), option, peers);
             multicast.send(msg);
         }
         else if(command.equals(EXIT))
@@ -113,10 +101,9 @@ public class Command implements Serializable {
         ArrayList<String> args = new ArrayList<>();
         if(System.getProperty("os.name").contains("Windows")) {
             args.add(powershell);
-            if (option.contains("disable")) {
+            if (option.contains("disable"))
                 args.add("start-process powershell -ArgumentList '-noprofile Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
-            }
-            else if(option.contains("disable"))
+            else if(option.contains("enable"))
                 args.add("start-process powershell -ArgumentList '-noprofile Enable-NetAdapterBinding -Name * -ComponentID ms_tcpip' -verb RunAs");
             String[] allArgs = new String[args.size()];
             allArgs = args.toArray(allArgs);
@@ -134,14 +121,16 @@ public class Command implements Serializable {
         if(message.getBody() instanceof  ArrayList<?>)
             body = ((ArrayList<String>) message.getBody());
         String firstArg = body.get(0);
-        String[] cmdTemp = null;
+        String[] cmdTemp = new String[3];
+        cmdTemp[0] = "powershell.exe";
+        cmdTemp[1] = "-command";
         if ((firstArg.contains("windows") && os.contains("Windows"))
                 || (firstArg.contains("linux") && os.contains("Linux"))) {
-             cmdTemp = body.get(1).split(" ");
+             cmdTemp[2] = body.get(1);
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
 
         } else if (!firstArg.contains("windows") && !firstArg.contains("Linux")) {
-            cmdTemp = body.get(0).split(" ");
+            cmdTemp[2] = body.get(0);
             executeAndSend(mc, message.getSender().getId(), SEND_COMMAND_ACK, true, cmdTemp);
         }
 
@@ -188,5 +177,32 @@ public class Command implements Serializable {
         CommandResponse cr = new CommandResponse(ec.getOutputStreamLines(), ec.getErrorStreamLines());
         Message response = new Message(operation, multicast.getThisPeer(), cr, senderID);
         multicast.send(response);
+    }
+
+    public static void executeProtocol(Multicast multicast, Message message) throws IOException, InterruptedException {
+        String os = System.getProperty("os.name");
+        String option = (String)message.getBody();
+        String operation = message.getOperation();
+        String[] ports = null;
+        if(operation.equals(HTTP))
+            ports = portsHTTP;
+        else if (operation.equals(HTTPS))
+            ports = portsHTTPS;
+        else if(operation.equals(FTP))
+            ports = portsFTP;
+        if(ports != null)
+            changeProtocolStatus(multicast, ports, option, message, os);
+    }
+
+    public static void changeProtocolStatus(Multicast multicast, String[] ports, String option, Message message, String os) throws IOException, InterruptedException {
+        if(os.contains("Windows"))
+        {
+            for (String port: ports) {
+                if(option.contains("disable"))
+                    blockPort(multicast, port, message.getSender().getId());
+                else if(option.contains("enable"))
+                    allowPort(multicast, port, message.getSender().getId());
+            }
+        }
     }
 }

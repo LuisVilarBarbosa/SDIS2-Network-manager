@@ -134,6 +134,8 @@ public class Multicast {
                             Command.executeTCP(this, message);
                         else if(message.getOperation().equals(Command.PORT))
                             Command.executePort(this, message);
+                        else if(message.getOperation().equals(Command.HTTP) || message.getOperation().equals(Command.HTTPS) || message.getOperation().equals(Command.FTP))
+                            Command.executeProtocol(this, message);
                     }
                 }
             }
