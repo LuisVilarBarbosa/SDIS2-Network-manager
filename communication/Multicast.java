@@ -149,12 +149,14 @@ public class Multicast {
         message.setLastSender(thisPeer);
         ArrayList<BigDecimal> receivers = message.getReceivers();
 
-        for (Node n : thisPeer.getChildren()) {
-            if (!lastSender.equals(n) && descendantIsReceiver(receivers)) {
-                try {
-                    send(n.getHostName(), n.getPort(), message);
-                } catch (Exception e) {
-                    removeNode(n);
+        if(descendantIsReceiver(receivers)) {
+            for (Node n : thisPeer.getChildren()) {
+                if (!lastSender.equals(n)) {
+                    try {
+                        send(n.getHostName(), n.getPort(), message);
+                    } catch (Exception e) {
+                        removeNode(n);
+                    }
                 }
             }
         }
