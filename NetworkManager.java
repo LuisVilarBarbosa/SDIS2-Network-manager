@@ -51,6 +51,7 @@ public class NetworkManager {
 
         //n.startMenu();
         n.receiveCommand(m);
+        System.exit(0);
     }
 
     private void receiveCommand(Multicast m) {
@@ -60,7 +61,7 @@ public class NetworkManager {
 
             String readCommand = s.nextLine();
 
-            if(readCommand.toLowerCase().contains("list")){
+            if(readCommand.equalsIgnoreCase("list")){
                 System.out.println("AVAILABLE COMMANDS:");
                 System.out.println("   SEND_FILE <file path> [<peer_id>...]\n" +
                         "   SEND_COMMAND [-windows|-linux] <command> [<peer_id>...]\n" +
@@ -68,6 +69,8 @@ public class NetworkManager {
                         "   TCP <-enable|-disable> [<peer_id>...]\n" +
                         "   HTTP <-enable|-disable> [<peer_id>...]\n" +
                         "   FTP <-enable|-disable> [<peer_id>...]\n" +
+                        "	CHANGE_PERMISSIONS <username> <REGULAR|ADMIN>\n" +
+                        "	LIST_USERS\n" +
                         "   EXIT\n");
             }
             else {
@@ -91,7 +94,7 @@ public class NetworkManager {
                 String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
                 Command c = new Command(m, finalCommands.get(0), args);
                 try {
-                    if (!c.execute(Client.admin)) {
+                    if (!c.execute(Client.db, Client.admin)) {
                         break;
                     }
                 } catch (Exception e) {

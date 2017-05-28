@@ -43,8 +43,9 @@ public class Client {
 			if(loginSucessful) {
 				try {
 					db = new Database("database/" + dbFolderPath);
+					Connection dbconnection = db.open();
 					if(loggedIn) {
-						if(db.open() != null) {
+						if(dbconnection != null) {
 							ResultSet rs = db.searchUser(username);
 							if(!rs.isAfterLast()) {
 								admin = rs.getBoolean("isAdmin");

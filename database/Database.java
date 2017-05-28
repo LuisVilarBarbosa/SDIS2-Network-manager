@@ -40,6 +40,8 @@ public class Database {
 	private static final String selectUserSQL =
 			"SELECT * FROM users "
 			+ "WHERE username LIKE ?;";
+	private static final String selectAllUsersSQL =
+			"SELECT * FROM users;";
 	
 	private static final String createFileTableSQL =
 			"CREATE TABLE files ("
@@ -104,7 +106,6 @@ public class Database {
 	
 	public boolean insertUser(String username) throws SQLException {
 		boolean b = insertUser(username, false);
-		System.out.println(b);
 		return b;
 	}
 	
@@ -149,6 +150,13 @@ public class Database {
 	public ResultSet searchUser(String username) throws SQLException {
 		PreparedStatement stmt = this.dbConnection.prepareStatement(selectUserSQL);
 		stmt.setString(1, username);
+		ResultSet rs = stmt.executeQuery();
+		rs.next();
+		return rs;
+	}
+	
+	public ResultSet getAllUsers() throws SQLException {
+		PreparedStatement stmt = this.dbConnection.prepareStatement(selectAllUsersSQL);
 		ResultSet rs = stmt.executeQuery();
 		rs.next();
 		return rs;

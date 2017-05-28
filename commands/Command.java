@@ -2,11 +2,15 @@ package commands;
 
 import communication.Message;
 import communication.Multicast;
+import database.Database;
 import files.TransmitFile;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.ClientInfoStatus;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +45,7 @@ public class Command implements Serializable {
         return peers;
     }
 
-    public boolean execute(boolean isAdmin) throws Exception {
+    public boolean execute(Database db, boolean isAdmin) throws Exception {
         if(command.equals("SEND_FILE")) {
             try {
                 TransmitFile.sendFile(multicast, args.get(0), getPeers(1));
@@ -52,6 +56,7 @@ public class Command implements Serializable {
         else if(command.equals("SEND_COMMAND")) {
         	if(!isAdmin) {
         		System.out.println(notEnoughPermissions);
+        		return true;
         	}
             BigDecimal[] peers = {};
             if(args.get(0).equals("-windows") || args.get(0).equals("-linux")) {
@@ -69,6 +74,7 @@ public class Command implements Serializable {
         else if(command.equals("PORT")) {
         	if(!isAdmin) {
         		System.out.println(notEnoughPermissions);
+        		return true;
         	}
             String option = args.get(0);
             String port = args.get(1);
@@ -81,6 +87,7 @@ public class Command implements Serializable {
         else if(command.equals("TCP")) {
         	if(!isAdmin) {
         		System.out.println(notEnoughPermissions);
+        		return true;
         	}
             String option = args.get(0);
             BigDecimal[] peers = getPeers(1);
@@ -91,6 +98,7 @@ public class Command implements Serializable {
         else if(command.equals("HTTP")) {
         	if(!isAdmin) {
         		System.out.println(notEnoughPermissions);
+        		return true;
         	}
             String option = args.get(0);
 
@@ -102,6 +110,7 @@ public class Command implements Serializable {
         else if(command.equals("FTP")) {
         	if(!isAdmin) {
         		System.out.println(notEnoughPermissions);
+        		return true;
         	}
             String option = args.get(0);
 
@@ -109,6 +118,53 @@ public class Command implements Serializable {
 
             Message msg = new Message("FTP", multicast.getThisPeer(), this, peers);
             multicast.send(msg);
+        }
+        else if(command.equalsIgnoreCase("LIST_USERS")) {
+        	try {
+        		ResultSet rs = db.getAllUsers();
+	    		String status = "";
+	        	System.out.println("User             Status");
+	        	while(!rs.isAfterLast()) {
+	        		if(rs.getBoolean("isAdmin")) {
+	        			status = "ADMIN";
+	        		} else {
+	        			status = "REGULAR";
+	        		}
+	        		System.out.format("%-20s= %s", rs.getInt("user"), status);
+	        	}
+        	} catch(SQLException e) {
+        		System.out.println("RIP");
+        	}
+        }
+        else if(command.equalsIgnoreCase("CHANGE_PERMISSIONS")) {
+        	if(!isAdmin) {
+        		System.out.println(notEnoughPermissions);
+        		return true;
+        	}
+        	String username = args.get(0);
+        	String permission = args.get(1);
+        	boolean isAdministrator = false;
+        	
+        	if(!permission.equalsIgnoreCase("regular") && !permission.equalsIgnoreCase("admin")){
+        		System.out.println("Not a valid type of user");
+        		return true;
+        	} else if(db.searchUser(username).isAfterLast()) {
+        		System.out.println("User not existant");
+        		return true;
+        	} else {
+        		if(permission.equalsIgnoreCase("regular")) {
+        			isAdministrator = false;
+        		} else if(permission.equalsIgnoreCase("admin")) {
+        			isAdministrator = true;
+        		} else {
+        			System.out.println("Error occured");
+        		}
+        		
+        		db.updateUser(username, isAdministrator);
+        		
+        		//TODO Atualizar as outras dbs
+        		return true;
+        	}
         }
         else if(command.equals("EXIT")) {
             return false;
