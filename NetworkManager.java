@@ -52,7 +52,6 @@ public class NetworkManager {
 
         NetworkManager n = new NetworkManager();
 
-        //n.startMenu();
         n.receiveCommand(m, Client.user);
         System.exit(0);
     }
@@ -111,44 +110,4 @@ public class NetworkManager {
             }
         }
     }
-
-    private int getResponse(int min, int max) {
-        System.out.print("Option: ");
-        Scanner scanner = new Scanner(System.in);
-        Integer value = null;
-        do {
-            try {
-                value = Integer.parseInt(scanner.next());
-            } catch (NumberFormatException e) {
-            }
-            if (value == null || value < min || value > max)
-                System.out.println("Invalid value.");
-        } while (value == null || value < min || value > max);
-        return value;
-    }
-
-    private void startMenu() {
-        System.out.println("1-Login");
-        System.out.println("2-Register");
-        int option = getResponse(1, 2);
-        switch (option) {
-            case 1:
-                login();
-                break;
-            case 2:
-                register();
-                break;
-        }
-    }
-
-    private void login() {
-        System.out.println("Email: ");
-        System.out.println("Password: ");
-    }
-
-    private void register() {
-
-    }
-
-
 }

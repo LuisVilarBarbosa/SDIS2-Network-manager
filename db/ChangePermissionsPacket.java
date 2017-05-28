@@ -3,9 +3,6 @@ package db;
 import java.io.Serializable;
 
 public class ChangePermissionsPacket implements Serializable {
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
     private String username;
     private boolean isAdmin;
@@ -30,6 +27,4 @@ public class ChangePermissionsPacket implements Serializable {
     public void setAdmin(boolean isAdmin) {
         this.isAdmin = isAdmin;
     }
-
-
 }
