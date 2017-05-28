@@ -37,10 +37,12 @@ public class Command implements Serializable {
     private String command;
     private ArrayList<String> args = new ArrayList<String>();
     private Multicast multicast;
+    private String username;
 
-    public Command(Multicast mc, String command, String... args) {
+    public Command(Multicast mc, String command, String username, String... args) {
         this.command = command;
         this.multicast = mc;
+        this.username = username;
         for (String arg : args) {
             this.args.add(arg);
         }
@@ -66,7 +68,7 @@ public class Command implements Serializable {
     public boolean execute(Database db, boolean isAdmin) throws Exception {
         if(command.equals(SEND_FILE)) {
             try {
-                TransmitFile.sendFile(multicast, args.get(0), getPeers(1));
+                TransmitFile.sendFile(multicast, args.get(0), username, getPeers(1));
             } catch (Exception e) {
                 e.printStackTrace();
             }

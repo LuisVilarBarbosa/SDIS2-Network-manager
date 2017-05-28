@@ -52,11 +52,11 @@ public class NetworkManager {
         NetworkManager n = new NetworkManager();
 
         //n.startMenu();
-        n.receiveCommand(m);
+        n.receiveCommand(m, Client.user);
         System.exit(0);
     }
 
-    private void receiveCommand(Multicast m) {
+    private void receiveCommand(Multicast m, String username) {
         while(true) {
             System.out.println("Write 'list' to view the availale commands");
             Scanner s = new Scanner(System.in);
@@ -100,7 +100,7 @@ public class NetworkManager {
                 String[] finalCommandsArr = new String[finalCommands.size()];
                 finalCommandsArr = finalCommands.toArray(finalCommandsArr);
                 String[] args = Arrays.copyOfRange(finalCommandsArr, 1, finalCommandsArr.length);
-                Command c = new Command(m, finalCommands.get(0), args);
+                Command c = new Command(m, finalCommands.get(0), username, args);
                 try {
                     if (!c.execute(Client.db, Client.admin)) {
                         break;

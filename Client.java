@@ -13,12 +13,14 @@ public class Client {
 	public static Database db;
 	public static boolean admin;
 	public static boolean loggedIn;
+	public static String user;
 	
 	public static boolean start(String dbFolderPath) {
 		String username = "";
 		String password = "";
 		if(CredentialAsker.requestAuthentication()) {
 			username = CredentialAsker.requestUsername();
+			user = username;
 			password = CredentialAsker.requestPassword();
 			loggedIn = true;
 		} else {
