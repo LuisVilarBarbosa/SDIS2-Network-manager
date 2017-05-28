@@ -1,0 +1,7 @@
+Instructions
+
+On the "Scripts" folder, there is a set of scripts that will help to use the program. Those which extension is ".ps1" are for Powershell and those which extension is ".sh" are for Bash. They do the same thing. For generic purposes, we will indicate ".ext" to reference ".ps1" and ".sh".
+ - The first thing to do is to execute the script "compile.ext".
+ - Then, it is possible to execute the script "peer1.ext" that will start running one peer. To stop the server type EXIT after initiating session.
+ - Run "peer2.ext" and/or "peer3.ext" to open more peers.
+ - Finally, execute commands accepted by the application in any of the peers.
