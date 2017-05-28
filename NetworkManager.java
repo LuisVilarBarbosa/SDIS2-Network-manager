@@ -1,5 +1,7 @@
 import commands.Command;
+import communication.Message;
 import communication.Multicast;
+import db.ChangePermissionsPacket;
 import login.Client;
 
 import java.util.ArrayList;
@@ -47,6 +49,9 @@ public class NetworkManager {
                 System.out.println("Could not open database");
                 return;
             }
+            Message msg = new Message(Command.CHANGE_PERMISSIONS, m.getThisPeer(),
+                    new ChangePermissionsPacket(Client.user, Client.admin));
+            m.send(msg);
 
         }
 

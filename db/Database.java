@@ -243,11 +243,5 @@ public class Database {
         return rs;
     }
 
-    //TODO 	OU usamos SQL diretamente
-    //		OU usamos preparedStatements, e depois temos de dar set aos "?"
-    //VER: http://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html
-
-    //Para correr java -classpath ".:sqlite-jdbc-3.16.1.jar" Client
-
 
 }

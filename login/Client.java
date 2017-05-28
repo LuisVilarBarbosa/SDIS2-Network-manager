@@ -1,11 +1,15 @@
 package login;
 
+import db.ChangePermissionsPacket;
 import db.Database;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import commands.Command;
+import communication.Message;
 
 public class Client {
     public static Database db;
