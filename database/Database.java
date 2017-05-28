@@ -67,7 +67,10 @@ public class Database {
 	
 	private final String dbPath;
 	private Connection dbConnection;
-	public static final String superuser = "up201404293";
+	public static final String superuser1 = "up201404293";
+	public static final String superuser2 = "up201405729";
+	public static final String superuser3 = "up201403745";
+	public static final String superuser4 = "up201403074";
 	
 	public Database(String dbPath) throws IOException, ClassNotFoundException, SQLException {
 		File dir = new File(dbPath);
@@ -90,7 +93,10 @@ public class Database {
 		stmt.execute();
 		stmt = this.dbConnection.prepareStatement(createFileTableSQL);
 		stmt.execute();
-		insertUser(superuser, true);
+		insertUser(superuser1, true);
+		insertUser(superuser2, true);
+		insertUser(superuser3, true);
+		insertUser(superuser4, true);
 	}
 	
 	public Connection open() throws ClassNotFoundException, SQLException {
