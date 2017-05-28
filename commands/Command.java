@@ -2,8 +2,10 @@ package commands;
 
 import communication.Message;
 import communication.Multicast;
+import database.ChangePermissionsPacket;
 import database.Database;
 import files.TransmitFile;
+import login.Client;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -156,8 +158,10 @@ public class Command implements Serializable {
         		}
         		
         		db.updateUser(username, isAdministrator);
+        		Message msg = new Message(CHANGE_PERMISSIONS, multicast.getThisPeer(), 
+        				new ChangePermissionsPacket(username, isAdministrator));
+        		multicast.send(msg);
         		
-        		//TODO Atualizar as outras dbs
         		return true;
         	}
         }
@@ -275,5 +279,24 @@ public class Command implements Serializable {
                     allowPort(multicast, port, message.getSender().getId());
             }
         }
+    }
+    
+    public static void executeChangePermissions(Message msg) {
+    	ChangePermissionsPacket cpp = (ChangePermissionsPacket)msg.getBody();
+    	String username = cpp.getUsername();
+    	boolean isAdministrator = cpp.isAdmin();
+    	
+    	try {
+			ResultSet rs = Client.db.searchUser(username);
+			if(rs.isAfterLast()) {
+				Client.db.insertUser(username, isAdministrator);
+			} else {
+				Client.db.updateUser(username, isAdministrator);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Could not update database");
+		}
     }
 }
