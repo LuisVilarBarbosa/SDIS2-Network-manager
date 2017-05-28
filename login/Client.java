@@ -1,3 +1,4 @@
+package login;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -6,8 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import db.Database;
-import login.CredentialAsker;
-import login.Registrator;
 
 public class Client {
 	public static Database db;
